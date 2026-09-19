@@ -5,6 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import authRoutes from './routes/auth.js';
+import taskRoutes from './routes/tasks.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
@@ -18,6 +19,7 @@ app.use(express.json({ limit: '5mb' }));
 
 // ── Routes ───────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
+app.use('/api/tasks', taskRoutes);
 
 // ── Health check ─────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {

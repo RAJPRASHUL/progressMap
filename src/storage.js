@@ -76,6 +76,10 @@ export async function updateTask(id, updates) {
   return request('PATCH', `/tasks/${id}`, updates);
 }
 
+export async function deleteTask(id) {
+  return request('DELETE', `/tasks/${id}`);
+}
+
 // ── notes ────────────────────────────────────────────────────────────
 
 export async function saveNote(date, text) {
