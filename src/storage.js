@@ -51,7 +51,9 @@ export function clearToken() {
 // ── auth ─────────────────────────────────────────────────────────────
 
 export async function register(email, password, name) {
-  return request('POST', '/auth/register', { email, password, name });
+  const data = await request('POST', '/auth/register', { email, password, name });
+  if (data?.token) setToken(data.token);
+  return data;
 }
 
 export async function login(email, password) {

@@ -20,6 +20,13 @@ export default {
           cyan: '#00e5ff',
           emerald: '#10b981',
           neonGreen: '#22c55e',
+
+          // Auth page indigo palette (design-reference/3)
+          indigo: '#6366F1',
+          indigoDark: '#585CE5',
+          indigoDeep: '#4F46E5',
+          indigoLight: '#EEF2FF',
+          indigoBg: '#EEF1F6',
           gold: '#F5B744',
           goldHover: '#E5A633',
 
