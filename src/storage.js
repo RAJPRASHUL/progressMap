@@ -82,6 +82,10 @@ export async function deleteTask(id) {
 
 // ── notes ────────────────────────────────────────────────────────────
 
+export async function getNote(date) {
+  return request('GET', `/notes/${date}`);
+}
+
 export async function saveNote(date, text) {
   return request('PUT', `/notes/${date}`, { text });
 }
