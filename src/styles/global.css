@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== Global custom styles ===== */
+
+body {
+  background-color: #090d14;
+  color: #e2e8f0;
+  -webkit-tap-highlight-color: transparent;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Card glass effect (dashboard cards) */
+.card-glass {
+  background: linear-gradient(
+    180deg,
+    rgba(23, 29, 44, 0.95) 0%,
+    rgba(18, 23, 35, 0.95) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* Glow effects */
+.btn-gold-glow {
+  box-shadow: 0 0 16px rgba(245, 183, 68, 0.25);
+}
+
+.avatar-glow {
+  box-shadow: 0 0 18px rgba(245, 183, 68, 0.25);
+  border: 1.5px solid rgba(245, 183, 68, 0.6);
+}
+
+.glow-cyan {
+  filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.45));
+}
+
+.glow-purple {
+  filter: drop-shadow(0 0 10px rgba(128, 104, 255, 0.5));
+}
+
+.glow-amber {
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
+/* Heatmap cell intensity */
+.cell-empty {
+  background-color: #1a2233;
+}
+.cell-dim {
+  background-color: #143528;
+}
+.cell-med {
+  background-color: #15803d;
+}
+.cell-bright {
+  background-color: #22c55e;
+}
+.cell-intense {
+  background-color: #4ade80;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: #252e42;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Light theme overrides */
+.light body,
+html.light body {
+  background-color: #f1f5f9;
+  color: #1e293b;
+}
