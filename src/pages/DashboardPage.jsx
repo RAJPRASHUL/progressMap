@@ -1,4 +1,5 @@
 import Navbar from '../components/Navbar';
+import TodaysQuest from '../components/TodaysQuest';
 
 export default function DashboardPage() {
   // Export PNG handler — implemented in Step 22
@@ -12,12 +13,10 @@ export default function DashboardPage() {
         {/* ── Navbar ── */}
         <Navbar onExportPng={handleExportPng} />
 
-        {/* ── Dashboard grid — placeholder cards for Step 7 ── */}
+        {/* ── Dashboard grid ── */}
         <main className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* Left col: Today's Quest */}
-          <section className="lg:col-span-3 card-glass rounded-2xl p-5 flex items-center justify-center min-h-[300px]">
-            <p className="text-slate-500 text-sm">Today's Quest — Step 10</p>
-          </section>
+          {/* Left col: Today's Quest (live) */}
+          <TodaysQuest />
 
           {/* Center col: Heatmap + Charts */}
           <section className="lg:col-span-6 space-y-5">
@@ -49,3 +48,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
