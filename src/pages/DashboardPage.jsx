@@ -1,10 +1,17 @@
 import Navbar from '../components/Navbar';
 import TodaysQuest from '../components/TodaysQuest';
+import Heatmap from '../components/Heatmap';
 
 export default function DashboardPage() {
   // Export PNG handler — implemented in Step 22
   function handleExportPng() {
     // placeholder until Step 22 (Canvas export)
+  }
+
+  // Day click handler — implemented in Step 13 (day drawer)
+  function handleDayClick(dateStr) {
+    // placeholder until Step 13 (drawer)
+    console.log('Day clicked:', dateStr);
   }
 
   return (
@@ -20,9 +27,7 @@ export default function DashboardPage() {
 
           {/* Center col: Heatmap + Charts */}
           <section className="lg:col-span-6 space-y-5">
-            <div className="card-glass rounded-2xl p-5 flex items-center justify-center min-h-[300px]">
-              <p className="text-slate-500 text-sm">Heatmap — Step 12</p>
-            </div>
+            <Heatmap onDayClick={handleDayClick} />
             <div className="card-glass rounded-2xl p-5 flex items-center justify-center min-h-[160px]">
               <p className="text-slate-500 text-sm">30-Day Chart — Step 15</p>
             </div>
@@ -48,4 +53,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
