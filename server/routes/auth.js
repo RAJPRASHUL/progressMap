@@ -1,7 +1,27 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
 const router = express.Router();
+
+/**
+ * Generate a signed JWT for a given user
+ */
+function generateToken(user) {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET is not configured in environment');
+  }
+
+  return jwt.sign(
+    {
+      id: user._id.toString(),
+      email: user.email,
+    },
+    secret,
+    { expiresIn: '30d' }
+  );
+}
 
 // ── POST /api/auth/register ──────────────────────────────────────────
 router.post('/register', async (req, res) => {
@@ -54,8 +74,11 @@ router.post('/register', async (req, res) => {
 
     await newUser.save();
 
+    const token = generateToken(newUser);
+
     return res.status(201).json({
       message: 'User registered successfully',
+      token,
       user: newUser.toSafeObject(),
     });
   } catch (error) {
@@ -71,6 +94,53 @@ router.post('/register', async (req, res) => {
 
     console.error('Registration error:', error);
     const msg = 'Server error during registration';
+    return res.status(500).json({ error: msg, message: msg });
+  }
+});
+
+// ── POST /api/auth/login ─────────────────────────────────────────────
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body || {};
+
+    // Validate inputs
+    if (!email || typeof email !== 'string' || !email.trim()) {
+      const msg = 'Email is required';
+      return res.status(400).json({ error: msg, message: msg });
+    }
+
+    if (!password || typeof password !== 'string') {
+      const msg = 'Password is required';
+      return res.status(400).json({ error: msg, message: msg });
+    }
+
+    const trimmedEmail = email.trim().toLowerCase();
+
+    // Find user by email
+    const user = await User.findOne({ email: trimmedEmail });
+    if (!user) {
+      const msg = 'Invalid email or password';
+      return res.status(401).json({ error: msg, message: msg });
+    }
+
+    // Verify password with bcrypt
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      const msg = 'Invalid email or password';
+      return res.status(401).json({ error: msg, message: msg });
+    }
+
+    // Sign JWT token
+    const token = generateToken(user);
+
+    return res.json({
+      message: 'Login successful',
+      token,
+      user: user.toSafeObject(),
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    const msg = 'Server error during login';
     return res.status(500).json({ error: msg, message: msg });
   }
 });
