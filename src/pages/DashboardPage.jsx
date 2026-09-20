@@ -7,6 +7,7 @@ import ThirtyDayChart from '../components/ThirtyDayChart';
 import WeekdayAverages from '../components/WeekdayAverages';
 import ConsistencyRing from '../components/ConsistencyRing';
 import StreakCard from '../components/StreakCard';
+import BadgeWall from '../components/BadgeWall';
 
 export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -45,9 +46,7 @@ export default function DashboardPage() {
           <section className="lg:col-span-3 space-y-5">
             <ConsistencyRing />
             <StreakCard />
-            <div className="card-glass rounded-2xl p-5 flex items-center justify-center min-h-[140px]">
-              <p className="text-slate-500 text-sm">Badge Wall — Step 18</p>
-            </div>
+            <BadgeWall />
           </section>
         </main>
       </div>
