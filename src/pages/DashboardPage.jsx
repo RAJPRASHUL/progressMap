@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar';
 import TodaysQuest from '../components/TodaysQuest';
 import Heatmap from '../components/Heatmap';
 import DayDrawer from '../components/DayDrawer';
+import ThirtyDayChart from '../components/ThirtyDayChart';
 
 export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -33,9 +34,7 @@ export default function DashboardPage() {
           {/* Center col: Heatmap + Charts */}
           <section className="lg:col-span-6 space-y-5">
             <Heatmap onDayClick={handleDayClick} />
-            <div className="card-glass rounded-2xl p-5 flex items-center justify-center min-h-[160px]">
-              <p className="text-slate-500 text-sm">30-Day Chart — Step 15</p>
-            </div>
+            <ThirtyDayChart />
             <div className="card-glass rounded-2xl p-5 flex items-center justify-center min-h-[160px]">
               <p className="text-slate-500 text-sm">Weekday Averages — Step 16</p>
             </div>
