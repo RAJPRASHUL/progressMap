@@ -139,15 +139,17 @@ export default function Navbar({ onExportPng }) {
         </button>
 
         {/* Export PNG Button */}
-        <button
-          id="export-png-btn"
-          type="button"
-          onClick={onExportPng}
-          className="flex items-center space-x-2 bg-[#6b56ff] hover:bg-[#5b45f5] text-white text-xs font-semibold px-4 py-2 rounded-xl shadow-lg shadow-indigo-600/30 transition"
-        >
-          <DownloadIcon />
-          <span>Export PNG</span>
-        </button>
+        {onExportPng && (
+          <button
+            id="export-png-btn"
+            type="button"
+            onClick={onExportPng}
+            className="flex items-center space-x-2 bg-[#6b56ff] hover:bg-[#5b45f5] text-white text-xs font-semibold px-4 py-2 rounded-xl shadow-lg shadow-indigo-600/30 transition"
+          >
+            <DownloadIcon />
+            <span>Export PNG</span>
+          </button>
+        )}
 
         {/* Notification Bell */}
         <button

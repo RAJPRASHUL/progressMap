@@ -99,3 +99,7 @@ export async function getSettings() {
 export async function updateSettings(settings) {
   return request('PUT', '/settings', settings);
 }
+
+export async function deleteAccount() {
+  return request('DELETE', '/settings/account');
+}

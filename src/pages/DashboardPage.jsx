@@ -8,14 +8,15 @@ import WeekdayAverages from '../components/WeekdayAverages';
 import ConsistencyRing from '../components/ConsistencyRing';
 import StreakCard from '../components/StreakCard';
 import BadgeWall from '../components/BadgeWall';
+import { exportHeatmapToPng } from '../utils/exportImage';
 
 export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Export PNG handler — implemented in Step 22
+  // Export PNG handler
   function handleExportPng() {
-    // placeholder until Step 22 (Canvas export)
+    exportHeatmapToPng('heatmap-container', `ProgressMap-Heatmap-${new Date().toISOString().slice(0,10)}.png`);
   }
 
   // Day click handler

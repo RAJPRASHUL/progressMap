@@ -167,6 +167,7 @@ export default function Heatmap({ onDayClick }) {
 
   return (
     <section
+      id="heatmap-container"
       className="lg:col-span-6 card-glass rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden"
       data-purpose="my-year-heatmap"
     >
