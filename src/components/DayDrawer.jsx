@@ -1,30 +1,49 @@
 import { useState, useEffect } from 'react';
-import { getTasks } from '../storage';
+import { getTasks, getNote, saveNote } from '../storage';
 
 export default function DayDrawer({ isOpen, date, onClose }) {
   const [tasks, setTasks] = useState([]);
+  const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
+  const [savingNote, setSavingNote] = useState(false);
 
   useEffect(() => {
     if (!isOpen || !date) return;
     
     let cancelled = false;
     setLoading(true);
+    setNote('');
 
-    getTasks(date, date)
-      .then((data) => {
+    Promise.all([
+      getTasks(date, date).catch(() => []),
+      getNote(date).catch(() => null)
+    ])
+      .then(([tasksData, noteData]) => {
         if (!cancelled) {
-          setTasks(data);
+          setTasks(tasksData || []);
+          setNote(noteData?.text || '');
           setLoading(false);
         }
       })
       .catch((err) => {
-        console.error('Failed to load tasks for drawer:', err);
+        console.error('Failed to load drawer data:', err);
         if (!cancelled) setLoading(false);
       });
 
     return () => { cancelled = true; };
   }, [isOpen, date]);
+
+  async function handleNoteBlur() {
+    if (!date) return;
+    setSavingNote(true);
+    try {
+      await saveNote(date, note);
+    } catch (err) {
+      console.error('Failed to save note:', err);
+    } finally {
+      setSavingNote(false);
+    }
+  }
 
   if (!isOpen) return null;
 
@@ -108,14 +127,26 @@ export default function DayDrawer({ isOpen, date, onClose }) {
             )}
           </div>
 
-          {/* Note Field Placeholder (for Step 14) */}
+          {/* Note Field */}
           <div>
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
-              Notes
-            </h3>
-            <div className="p-4 rounded-xl border border-dashed border-slate-700 text-slate-500 text-sm">
-              Note field will be added in Step 14.
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                Notes
+              </h3>
+              {savingNote && <span className="text-[10px] text-slate-500">Saving...</span>}
             </div>
+            
+            {loading ? (
+              <div className="text-sm text-slate-500">Loading...</div>
+            ) : (
+              <textarea
+                className="w-full bg-[#151b28] border border-white/5 rounded-xl p-4 text-sm text-slate-300 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 resize-y min-h-[120px] transition"
+                placeholder="Write your reflections for the day..."
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                onBlur={handleNoteBlur}
+              />
+            )}
           </div>
 
         </div>
