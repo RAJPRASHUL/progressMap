@@ -6,6 +6,17 @@ export const BADGE_TIERS = [
   { name: 'Legend',  threshold: 60, emoji: '👑', color: 'amber',  desc: 'Complete 60-day streak' },
 ];
 
+export const JOURNEY_TIERS = [
+  { name: 'Night Owl', threshold: 1,   emoji: '🦉' },
+  { name: 'Spark',     threshold: 3,   emoji: '⚡' },
+  { name: 'Flame',     threshold: 7,   emoji: '🔥' },
+  { name: 'Phoenix',   threshold: 14,  emoji: '🏆' },
+  { name: 'Dragon',    threshold: 30,  emoji: '🐉' },
+  { name: 'Titan',     threshold: 60,  emoji: '💎' },
+  { name: 'Mythic',    threshold: 100, emoji: '🌌' },
+  { name: 'Immortal',  threshold: 365, emoji: '🦁' }
+];
+
 export const ACHIEVEMENT_BADGES = [
   { id: 'first_task',   name: 'First Step',    emoji: '🌟', check: (stats) => stats.totalTasks >= 1, desc: 'Complete your first task' },
   { id: 'ten_tasks',    name: 'Hustler',       emoji: '⭐', check: (stats) => stats.totalDone >= 10, desc: 'Complete 10 tasks' },
@@ -43,6 +54,36 @@ export function computeStreak(tasksByDate) {
     }
   }
   return streak;
+}
+
+export function computeLongestStreak(tasksByDate) {
+  let longest = 0;
+  let current = 0;
+  
+  // Sort dates to walk forward
+  const sortedDates = Object.keys(tasksByDate).sort();
+  let prevDate = null;
+
+  for (const dateStr of sortedDates) {
+    const info = tasksByDate[dateStr];
+    if (info.done > 0) {
+      const d = new Date(dateStr);
+      if (!prevDate) {
+        current = 1;
+      } else {
+        const diff = Math.floor((d - prevDate) / (1000 * 60 * 60 * 24));
+        if (diff === 1) {
+          current += 1;
+        } else {
+          current = 1;
+        }
+      }
+      prevDate = d;
+      if (current > longest) longest = current;
+    }
+  }
+  
+  return longest;
 }
 
 export function computeStats(tasksByDate) {
