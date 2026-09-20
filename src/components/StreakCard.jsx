@@ -1,50 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getTasks } from '../storage';
-
-// ── Helpers ───────────────────────────────────────────────────────────
-
-function toLocalDate(date = new Date()) {
-  return date.toISOString().slice(0, 10);
-}
-
-/** Walk backwards from today finding consecutive days with ≥1 completed task. */
-function computeStreak(tasksByDate) {
-  let streak = 0;
-  const d = new Date();
-
-  // Start from yesterday if today has no tasks yet (allow today to not break streak)
-  const todayStr = toLocalDate(d);
-  const todayInfo = tasksByDate[todayStr];
-  if (todayInfo && todayInfo.done > 0) {
-    streak = 1;
-    d.setDate(d.getDate() - 1);
-  } else {
-    d.setDate(d.getDate() - 1);
-  }
-
-  // Walk backwards
-  for (let i = 0; i < 365; i++) {
-    const dateStr = toLocalDate(d);
-    const info = tasksByDate[dateStr];
-    if (info && info.done > 0) {
-      streak += 1;
-      d.setDate(d.getDate() - 1);
-    } else {
-      break;
-    }
-  }
-
-  return streak;
-}
-
-// Badge tiers
-const BADGE_TIERS = [
-  { name: 'Spark',    threshold: 3,  emoji: '⚡' },
-  { name: 'Flame',    threshold: 7,  emoji: '🔥' },
-  { name: 'Phoenix',  threshold: 14, emoji: '🏆' },
-  { name: 'Titan',    threshold: 30, emoji: '💎' },
-  { name: 'Legend',   threshold: 60, emoji: '👑' },
-];
+import { toLocalDate, computeStreak, BADGE_TIERS } from '../utils/milestones';
 
 function getCurrentBadge(streak) {
   let current = BADGE_TIERS[0];

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { MilestoneProvider } from './context/MilestoneContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
@@ -10,8 +11,9 @@ import SettingsPage from './pages/SettingsPage';
 export default function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <BrowserRouter>
+      <MilestoneProvider>
+        <AuthProvider>
+          <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
             <Route
@@ -42,6 +44,7 @@ export default function App() {
           </Routes>
         </BrowserRouter>
       </AuthProvider>
+      </MilestoneProvider>
     </ThemeProvider>
   );
 }

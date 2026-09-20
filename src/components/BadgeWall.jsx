@@ -1,56 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getTasks } from '../storage';
-
-// ── Badge Definitions ─────────────────────────────────────────────────
-
-const BADGE_TIERS = [
-  { name: 'Spark',   threshold: 3,  emoji: '⚡', color: 'cyan',   desc: 'Complete 3-day streak' },
-  { name: 'Flame',   threshold: 7,  emoji: '🔥', color: 'amber',  desc: 'Complete 7-day streak' },
-  { name: 'Phoenix', threshold: 14, emoji: '🏆', color: 'amber',  desc: 'Complete 14-day streak' },
-  { name: 'Titan',   threshold: 30, emoji: '💎', color: 'amber',  desc: 'Complete 30-day streak' },
-  { name: 'Legend',  threshold: 60, emoji: '👑', color: 'amber',  desc: 'Complete 60-day streak' },
-];
-
-const ACHIEVEMENT_BADGES = [
-  { id: 'first_task',   name: 'First Step',    emoji: '🌟', check: (stats) => stats.totalTasks >= 1, desc: 'Complete your first task' },
-  { id: 'ten_tasks',    name: 'Hustler',       emoji: '⭐', check: (stats) => stats.totalDone >= 10, desc: 'Complete 10 tasks' },
-  { id: 'perfect_day',  name: 'Perfect Day',   emoji: '🎯', check: (stats) => stats.perfectDays >= 1, desc: 'Complete all tasks in a day' },
-  { id: 'five_perfect', name: 'Perfectionist', emoji: '✨', check: (stats) => stats.perfectDays >= 5, desc: '5 perfect days' },
-  { id: 'fifty_tasks',  name: 'Warrior',       emoji: '⚔️', check: (stats) => stats.totalDone >= 50, desc: 'Complete 50 tasks' },
-  { id: 'hundred',      name: 'Centurion',     emoji: '🛡️', check: (stats) => stats.totalDone >= 100, desc: 'Complete 100 tasks' },
-  { id: 'week_perfect', name: 'Unstoppable',   emoji: '🚀', check: (stats) => stats.perfectDays >= 7, desc: '7 perfect days' },
-  { id: 'two_hundred',  name: 'Grandmaster',   emoji: '💎', check: (stats) => stats.totalDone >= 200, desc: 'Complete 200 tasks' },
-];
-
-// ── Helpers ───────────────────────────────────────────────────────────
-
-function toLocalDate(date = new Date()) {
-  return date.toISOString().slice(0, 10);
-}
-
-function computeStreak(tasksByDate) {
-  let streak = 0;
-  const d = new Date();
-  const todayStr = toLocalDate(d);
-  const todayInfo = tasksByDate[todayStr];
-  if (todayInfo && todayInfo.done > 0) {
-    streak = 1;
-    d.setDate(d.getDate() - 1);
-  } else {
-    d.setDate(d.getDate() - 1);
-  }
-  for (let i = 0; i < 365; i++) {
-    const dateStr = toLocalDate(d);
-    const info = tasksByDate[dateStr];
-    if (info && info.done > 0) {
-      streak += 1;
-      d.setDate(d.getDate() - 1);
-    } else {
-      break;
-    }
-  }
-  return streak;
-}
+import { 
+  BADGE_TIERS, 
+  ACHIEVEMENT_BADGES, 
+  toLocalDate, 
+  computeStreak, 
+  computeStats 
+} from '../utils/milestones';
 
 // ── Component ─────────────────────────────────────────────────────────
 
