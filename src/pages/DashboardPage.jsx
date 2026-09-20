@@ -1,17 +1,22 @@
+import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import TodaysQuest from '../components/TodaysQuest';
 import Heatmap from '../components/Heatmap';
+import DayDrawer from '../components/DayDrawer';
 
 export default function DashboardPage() {
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
   // Export PNG handler — implemented in Step 22
   function handleExportPng() {
     // placeholder until Step 22 (Canvas export)
   }
 
-  // Day click handler — implemented in Step 13 (day drawer)
+  // Day click handler
   function handleDayClick(dateStr) {
-    // placeholder until Step 13 (drawer)
-    console.log('Day clicked:', dateStr);
+    setSelectedDate(dateStr);
+    setIsDrawerOpen(true);
   }
 
   return (
@@ -50,6 +55,12 @@ export default function DashboardPage() {
           </section>
         </main>
       </div>
+
+      <DayDrawer 
+        isOpen={isDrawerOpen} 
+        date={selectedDate} 
+        onClose={() => setIsDrawerOpen(false)} 
+      />
     </div>
   );
 }
