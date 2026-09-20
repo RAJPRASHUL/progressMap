@@ -5,6 +5,8 @@ import Heatmap from '../components/Heatmap';
 import DayDrawer from '../components/DayDrawer';
 import ThirtyDayChart from '../components/ThirtyDayChart';
 import WeekdayAverages from '../components/WeekdayAverages';
+import ConsistencyRing from '../components/ConsistencyRing';
+import StreakCard from '../components/StreakCard';
 
 export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -41,12 +43,8 @@ export default function DashboardPage() {
 
           {/* Right col: Rings + Badges */}
           <section className="lg:col-span-3 space-y-5">
-            <div className="card-glass rounded-2xl p-5 flex items-center justify-center min-h-[140px]">
-              <p className="text-slate-500 text-sm">Consistency Ring — Step 17</p>
-            </div>
-            <div className="card-glass rounded-2xl p-5 flex items-center justify-center min-h-[140px]">
-              <p className="text-slate-500 text-sm">Streak Card — Step 17</p>
-            </div>
+            <ConsistencyRing />
+            <StreakCard />
             <div className="card-glass rounded-2xl p-5 flex items-center justify-center min-h-[140px]">
               <p className="text-slate-500 text-sm">Badge Wall — Step 18</p>
             </div>
