@@ -2,11 +2,20 @@
 
 ProgressMap is a full-stack productivity dashboard for tracking daily tasks, completion streaks, perfect-day milestones, notes, and long-term progress.
 
+## Resume Highlights
+
+**ProgressMap | React | Vite | Node.js | Express | MongoDB**
+
+- Built a full-stack productivity dashboard with JWT authentication, daily task management, notes, streak tracking, and a GitHub-style activity heatmap.
+- Developed permanent perfect-day badge milestones with current streak tracking, consistency metrics, weekday averages, and achievements progress.
+- Implemented responsive dashboard, profile settings, avatar uploads, one-way task completion, date-based task drawers, and downloadable heatmap PNG exports.
+- Deployed the React frontend on Vercel and the Express/MongoDB backend on Render with protected API routes and MongoDB Atlas persistence.
+
 ## Live Demo
 
 Try the deployed application:
 
-[Open ProgressMap](https://progress-map-iwav-git-main-rajprashuls-projects.vercel.app/auth)
+[Open ProgressMap](https://progress-map-ten.vercel.app/auth)
 
 The live frontend is deployed on Vercel and connects to the Express API deployed on Render. Open the link above to register or sign in and use the dashboard.
 
