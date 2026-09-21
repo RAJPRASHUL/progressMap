@@ -9,7 +9,7 @@ export default function DayDrawer({ isOpen, date, onClose }) {
 
   useEffect(() => {
     if (!isOpen || !date) return;
-    
+
     let cancelled = false;
     setLoading(true);
     setNote('');
@@ -64,13 +64,13 @@ export default function DayDrawer({ isOpen, date, onClose }) {
   return (
     <>
       {/* Overlay */}
-      <div 
+      <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity"
         onClick={onClose}
       />
 
       {/* Drawer */}
-      <div 
+      <div
         className="fixed top-0 right-0 h-full w-full sm:w-[400px] bg-[#0d121c] border-l border-white/5 shadow-2xl z-50 flex flex-col transform transition-transform duration-300 translate-x-0"
       >
         {/* Header */}
@@ -81,7 +81,7 @@ export default function DayDrawer({ isOpen, date, onClose }) {
               {total === 0 ? 'No tasks' : `${doneCount} of ${total} tasks completed (${pct}%)`}
             </p>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-slate-300 flex items-center justify-center transition"
           >
@@ -91,13 +91,13 @@ export default function DayDrawer({ isOpen, date, onClose }) {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          
+
           {/* Tasks List */}
           <div>
             <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
               Tasks
             </h3>
-            
+
             {loading ? (
               <div className="text-sm text-slate-500">Loading tasks...</div>
             ) : tasks.length === 0 ? (
@@ -135,7 +135,7 @@ export default function DayDrawer({ isOpen, date, onClose }) {
               </h3>
               {savingNote && <span className="text-[10px] text-slate-500">Saving...</span>}
             </div>
-            
+
             {loading ? (
               <div className="text-sm text-slate-500">Loading...</div>
             ) : (

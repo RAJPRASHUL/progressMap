@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getTasks } from '../storage';
-import { 
-  BADGE_TIERS, 
-  ACHIEVEMENT_BADGES, 
-  toLocalDate, 
-  computeStreak, 
-  computeStats 
+import {
+  BADGE_TIERS,
+  ACHIEVEMENT_BADGES,
+  toLocalDate,
+  computeStreak,
+  computeStats
 } from '../utils/milestones';
 
 // ── Component ─────────────────────────────────────────────────────────
@@ -106,11 +106,10 @@ export default function BadgeWall() {
         className="card-glass rounded-2xl p-3.5 flex items-center space-x-3.5"
         data-purpose="current-badge"
       >
-        <div className={`w-12 h-12 rounded-xl ${
-          currentBadge
+        <div className={`w-12 h-12 rounded-xl ${currentBadge
             ? `${colorMap[currentBadge.color].bg} ${colorMap[currentBadge.color].border} shadow-lg ${colorMap[currentBadge.color].shadow}`
             : 'bg-slate-800/80 border-slate-700'
-        } border flex items-center justify-center text-xl`}>
+          } border flex items-center justify-center text-xl`}>
           {loading ? '…' : currentBadge ? currentBadge.emoji : '—'}
         </div>
         <div>

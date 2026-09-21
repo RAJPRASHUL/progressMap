@@ -26,10 +26,10 @@ function getYearDates(year) {
 
 /** Map ratio (0–1) to intensity level 0–4. */
 function intensityLevel(ratio) {
-  if (ratio <= 0)    return 0; // no tasks or 0%
-  if (ratio < 0.33)  return 1; // dim
-  if (ratio < 0.66)  return 2; // med
-  if (ratio < 1)     return 3; // bright
+  if (ratio <= 0) return 0; // no tasks or 0%
+  if (ratio < 0.33) return 1; // dim
+  if (ratio < 0.66) return 2; // med
+  if (ratio < 1) return 3; // bright
   return 4;                    // perfect (100%)
 }
 
@@ -41,7 +41,7 @@ const CELL_COLORS = [
   '#4ade80',  // 4: intense (perfect)
 ];
 
-const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 // ── Heatmap Component ─────────────────────────────────────────────────
 

@@ -40,11 +40,11 @@ export default function ThirtyDayChart() {
   const [tasksByDate, setTasksByDate] = useState({});
   const [loading, setLoading] = useState(true);
   const [hoveredIndex, setHoveredIndex] = useState(null);
-  
+
   const svgRef = useRef(null);
 
   const dates = useMemo(() => getPast30Days(), []);
-  
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -77,12 +77,12 @@ export default function ThirtyDayChart() {
     return dates.map((date, i) => {
       const info = tasksByDate[date] || { total: 0, done: 0 };
       const pct = info.total > 0 ? info.done / info.total : 0;
-      
+
       // X: 0 to 500
       const x = (i / 29) * 500;
       // Y: 150 (bottom/0%) to 20 (top/100%)
       const y = 150 - (pct * 130);
-      
+
       return { x, y, date, ...info, pct: Math.round(pct * 100) };
     });
   }, [dates, tasksByDate]);
@@ -103,7 +103,7 @@ export default function ThirtyDayChart() {
     const rect = svgRef.current.getBoundingClientRect();
     const xRatio = (e.clientX - rect.left) / rect.width;
     const dataX = xRatio * 500;
-    
+
     // Find closest point index
     let closestIdx = 0;
     let minDiff = Infinity;
@@ -124,24 +124,24 @@ export default function ThirtyDayChart() {
   const tooltipPoint = hoveredIndex !== null ? points[hoveredIndex] : null;
 
   return (
-    <section 
-      className="card-glass rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden h-full min-h-[250px]" 
+    <section
+      className="card-glass rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden h-full min-h-[250px]"
       data-purpose="30-days-chart"
     >
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-sm font-semibold tracking-wide text-white">30 Days</h2>
-        
+
         {/* Active Tooltip Badge (or placeholder) */}
         {tooltipPoint && tooltipPoint.total > 0 ? (
           <div className="bg-[#1f283d] text-slate-300 text-[10px] px-2.5 py-1 rounded-full border border-slate-700 shadow-md flex items-center space-x-1">
             <span>
-              {new Date(tooltipPoint.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} 
+              {new Date(tooltipPoint.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               {' · '}{tooltipPoint.done}/{tooltipPoint.total}{' '}
               {tooltipPoint.done === tooltipPoint.total ? '🎯' : ''}
             </span>
           </div>
         ) : tooltipPoint ? (
-           <div className="bg-[#1f283d] text-slate-500 text-[10px] px-2.5 py-1 rounded-full border border-slate-700 shadow-md">
+          <div className="bg-[#1f283d] text-slate-500 text-[10px] px-2.5 py-1 rounded-full border border-slate-700 shadow-md">
             {new Date(tooltipPoint.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · no tasks
           </div>
         ) : (
@@ -154,15 +154,15 @@ export default function ThirtyDayChart() {
           Loading chart...
         </div>
       ) : (
-        <div 
+        <div
           className="relative w-full h-44 mt-2"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
-          <svg 
+          <svg
             ref={svgRef}
-            className="w-full h-full cursor-crosshair" 
-            preserveAspectRatio="none" 
+            className="w-full h-full cursor-crosshair"
+            preserveAspectRatio="none"
             viewBox="0 0 500 180"
           >
             <defs>
@@ -183,12 +183,12 @@ export default function ThirtyDayChart() {
             <path d={areaPath} fill="url(#areaGrad)" />
 
             {/* Line Stroke */}
-            <path 
-              d={linePath} 
-              fill="none" 
-              stroke="url(#strokeGrad)" 
-              strokeLinecap="round" 
-              strokeWidth="3.5" 
+            <path
+              d={linePath}
+              fill="none"
+              stroke="url(#strokeGrad)"
+              strokeLinecap="round"
+              strokeWidth="3.5"
             />
 
             {/* Perfect Day Peaks (Always visible) */}
@@ -201,18 +201,18 @@ export default function ThirtyDayChart() {
 
             {/* Hovered Point Indicator */}
             {tooltipPoint && (
-              <line 
-                x1={tooltipPoint.x} 
-                y1="0" 
-                x2={tooltipPoint.x} 
-                y2="180" 
-                stroke="#ffffff" 
-                strokeOpacity="0.15" 
-                strokeDasharray="4 4" 
+              <line
+                x1={tooltipPoint.x}
+                y1="0"
+                x2={tooltipPoint.x}
+                y2="180"
+                stroke="#ffffff"
+                strokeOpacity="0.15"
+                strokeDasharray="4 4"
               />
             )}
             {tooltipPoint && tooltipPoint.total > 0 && !perfectDays.find(p => p.date === tooltipPoint.date) && (
-               <circle cx={tooltipPoint.x} cy={tooltipPoint.y} r="4" fill="#ffffff" stroke="#60a5fa" strokeWidth="2" />
+              <circle cx={tooltipPoint.x} cy={tooltipPoint.y} r="4" fill="#ffffff" stroke="#60a5fa" strokeWidth="2" />
             )}
           </svg>
         </div>

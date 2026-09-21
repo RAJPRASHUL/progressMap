@@ -81,11 +81,10 @@ function TaskRow({ task, onToggle, onDelete }) {
 
       {/* Title */}
       <span
-        className={`flex-1 transition-colors ${
-          task.completed
+        className={`flex-1 transition-colors ${task.completed
             ? 'line-through text-slate-500'
             : 'text-slate-300'
-        }`}
+          }`}
       >
         {task.title}
       </span>
@@ -215,9 +214,9 @@ export default function TodaysQuest() {
 
   // ── Render ──────────────────────────────────────────────────────
   return (
-    <section className="lg:col-span-3 card-glass rounded-2xl p-5 flex flex-col justify-between">
+    <section className="lg:col-span-3 bg-theme-elevated rounded-2xl p-5 flex flex-col justify-between">
       <div>
-        <h2 className="text-sm font-semibold tracking-wide text-white mb-4">
+        <h2 className="text-sm font-semibold tracking-wide text-theme-text mb-4">
           Today's Quest
         </h2>
 
@@ -225,18 +224,18 @@ export default function TodaysQuest() {
         <div className="flex items-center space-x-4 mb-6">
           <ProgressRing percent={percent} />
           <div>
-            <div className="text-sm font-bold text-white tracking-tight">
+            <div className="text-sm font-bold text-theme-text tracking-tight">
               {done} of {total} tasks
             </div>
-            <div className="text-xs text-slate-400">{dayName()}</div>
+            <div className="text-xs text-theme-muted">{dayName()}</div>
           </div>
         </div>
 
         {/* Task list */}
         {loading ? (
-          <div className="text-xs text-slate-500 text-center py-4">Loading…</div>
+          <div className="text-xs text-theme-muted text-center py-4">Loading…</div>
         ) : tasks.length === 0 && !adding ? (
-          <div className="text-xs text-slate-500 text-center py-4">
+          <div className="text-xs text-theme-muted text-center py-4">
             No tasks yet — add your first one!
           </div>
         ) : (
@@ -268,7 +267,7 @@ export default function TodaysQuest() {
                 }
               }}
               placeholder="What will you do today?"
-              className="flex-1 bg-transparent border-b border-slate-700 focus:border-indigo-500 outline-none text-xs text-white placeholder-slate-600 py-1 transition-colors"
+              className="flex-1 bg-transparent border-b border-theme-border focus:border-indigo-500 outline-none text-xs text-theme-text placeholder-slate-600 py-1 transition-colors"
             />
           </div>
         )}
@@ -276,7 +275,7 @@ export default function TodaysQuest() {
         <button
           type="button"
           onClick={handleAdd}
-          className="w-full mt-5 py-2 px-3 border border-dashed border-slate-700 hover:border-slate-500 rounded-xl text-slate-400 text-xs flex items-center justify-center space-x-1.5 transition"
+          className="w-full mt-5 py-2 px-3 border border-dashed border-theme-border hover:border-slate-500 rounded-xl text-theme-muted text-xs flex items-center justify-center space-x-1.5 transition"
         >
           <span>+ Add task</span>
         </button>
@@ -287,7 +286,7 @@ export default function TodaysQuest() {
         <button
           type="button"
           onClick={handleRollOver}
-          className="w-full pt-4 text-center text-[11px] text-slate-500 hover:text-indigo-400 transition flex items-center justify-center gap-1.5"
+          className="w-full pt-4 text-center text-[11px] text-theme-muted hover:text-indigo-400 transition flex items-center justify-center gap-1.5"
         >
           <span>↺</span>
           <span>

@@ -109,11 +109,10 @@ export default function WeekdayAverages() {
             return (
               <div key={label} className="flex flex-col items-center gap-2">
                 <div
-                  className={`w-3.5 rounded-full transition-all duration-500 ${
-                    isBest
+                  className={`w-3.5 rounded-full transition-all duration-500 ${isBest
                       ? 'bg-[#6d5dfc]'
                       : 'bg-emerald-400'
-                  }`}
+                    }`}
                   style={{
                     height: `${heightPx}px`,
                     ...(isBest
@@ -122,13 +121,12 @@ export default function WeekdayAverages() {
                   }}
                 />
                 <span
-                  className={`text-[10px] ${
-                    isBest
+                  className={`text-[10px] ${isBest
                       ? 'text-slate-400 font-semibold'
                       : isToday
-                      ? 'text-slate-400'
-                      : 'text-slate-500'
-                  }`}
+                        ? 'text-slate-400'
+                        : 'text-slate-500'
+                    }`}
                 >
                   {label}
                 </span>

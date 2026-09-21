@@ -13,11 +13,9 @@ body {
 
 /* Card glass effect (dashboard cards) */
 .card-glass {
-  background: linear-gradient(
-    180deg,
-    rgba(23, 29, 44, 0.95) 0%,
-    rgba(18, 23, 35, 0.95) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(23, 29, 44, 0.95) 0%,
+      rgba(18, 23, 35, 0.95) 100%);
   border: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
 }
@@ -48,15 +46,19 @@ body {
 .cell-empty {
   background-color: #1a2233;
 }
+
 .cell-dim {
   background-color: #143528;
 }
+
 .cell-med {
   background-color: #15803d;
 }
+
 .cell-bright {
   background-color: #22c55e;
 }
+
 .cell-intense {
   background-color: #4ade80;
 }
@@ -66,10 +68,12 @@ body {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #252e42;
   border-radius: 9999px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }

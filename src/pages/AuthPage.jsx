@@ -194,11 +194,10 @@ export default function AuthPage() {
               type="button"
               aria-current={mode === 'login' ? 'page' : undefined}
               onClick={() => switchMode('login')}
-              className={`flex-1 py-2.5 text-center text-sm font-semibold rounded-xl transition-all focus:outline-none ${
-                mode === 'login'
+              className={`flex-1 py-2.5 text-center text-sm font-semibold rounded-xl transition-all focus:outline-none ${mode === 'login'
                   ? 'bg-gradient-to-r from-[#6366F1] to-[#585CE5] text-white shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
-              }`}
+                }`}
             >
               Login
             </button>
@@ -206,11 +205,10 @@ export default function AuthPage() {
               type="button"
               aria-current={mode === 'register' ? 'page' : undefined}
               onClick={() => switchMode('register')}
-              className={`flex-1 py-2.5 text-center text-sm font-semibold rounded-xl transition-all focus:outline-none ${
-                mode === 'register'
+              className={`flex-1 py-2.5 text-center text-sm font-semibold rounded-xl transition-all focus:outline-none ${mode === 'register'
                   ? 'bg-gradient-to-r from-[#6366F1] to-[#585CE5] text-white shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
-              }`}
+                }`}
             >
               Register
             </button>
@@ -248,11 +246,10 @@ export default function AuthPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     onBlur={onBlurName}
-                    className={`block w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-slate-800 text-sm transition-colors focus:outline-none focus:ring-2 ${
-                      errors.name
+                    className={`block w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-slate-800 text-sm transition-colors focus:outline-none focus:ring-2 ${errors.name
                         ? 'border-2 border-red-500 focus:ring-red-400 focus:border-red-500'
                         : 'border-slate-300 focus:ring-[#6366F1] focus:border-[#6366F1]'
-                    }`}
+                      }`}
                   />
                 </div>
                 {errors.name && (
@@ -281,11 +278,10 @@ export default function AuthPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onBlur={onBlurEmail}
-                  className={`block w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-slate-800 text-sm transition-colors focus:outline-none focus:ring-2 ${
-                    errors.email
+                  className={`block w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-slate-800 text-sm transition-colors focus:outline-none focus:ring-2 ${errors.email
                       ? 'border-2 border-red-500 focus:ring-red-400 focus:border-red-500'
                       : 'border-slate-300 focus:ring-[#6366F1] focus:border-[#6366F1]'
-                  }`}
+                    }`}
                 />
               </div>
               {errors.email && (
@@ -313,11 +309,10 @@ export default function AuthPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   onBlur={onBlurPassword}
-                  className={`block w-full pl-10 pr-10 py-3 bg-white border rounded-xl text-slate-800 text-sm transition-colors focus:outline-none focus:ring-2 ${
-                    errors.password
+                  className={`block w-full pl-10 pr-10 py-3 bg-white border rounded-xl text-slate-800 text-sm transition-colors focus:outline-none focus:ring-2 ${errors.password
                       ? 'border-2 border-red-500 focus:ring-red-400 focus:border-red-500'
                       : 'border-slate-300 focus:ring-[#6366F1] focus:border-[#6366F1]'
-                  }`}
+                    }`}
                 />
                 <button
                   type="button"
@@ -378,8 +373,8 @@ export default function AuthPage() {
                     ? 'Signing in…'
                     : 'Creating account…'
                   : mode === 'login'
-                  ? 'Sign In'
-                  : 'Create Account'}
+                    ? 'Sign In'
+                    : 'Create Account'}
               </button>
             </div>
           </form>

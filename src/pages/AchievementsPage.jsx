@@ -14,7 +14,7 @@ export default function AchievementsPage() {
         const to = d.toISOString().slice(0, 10);
         d.setFullYear(d.getFullYear() - 1);
         const from = d.toISOString().slice(0, 10);
-        
+
         const data = await getTasks(from, to);
         setTasks(data);
       } catch (err) {
@@ -26,7 +26,7 @@ export default function AchievementsPage() {
     loadTasks();
   }, []);
 
-  const { tasksByDate, perfectDays, longestStreak } = useMemo(() => {
+  const { tasksByDate, perfectDays, longestStreak, perfectDatesAsc } = useMemo(() => {
     const map = {};
     tasks.forEach(t => {
       if (!map[t.date]) map[t.date] = { total: 0, done: 0 };
@@ -37,10 +37,15 @@ export default function AchievementsPage() {
     const stats = computeStats(map);
     const longest = computeLongestStreak(map);
 
-    return { 
+    const perfectDatesAsc = Object.keys(map)
+      .filter(date => map[date].total > 0 && map[date].total === map[date].done)
+      .sort();
+
+    return {
       tasksByDate: map,
       perfectDays: stats.perfectDays,
-      longestStreak: longest 
+      longestStreak: longest,
+      perfectDatesAsc
     };
   }, [tasks]);
 
@@ -63,7 +68,7 @@ export default function AchievementsPage() {
         <Navbar />
 
         <main className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8 text-slate-200 selection:bg-amber-500/20">
-          
+
           <header className="mb-8" data-purpose="page-header">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#7d5e2a] bg-[#1d1912]/50 text-[#e6b359] text-xs font-semibold tracking-wider mb-4 uppercase">
               <span>S3 · Achievements</span>
@@ -121,7 +126,7 @@ export default function AchievementsPage() {
               const baseClasses = "relative z-10 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 transition ";
               let wrapperClasses = baseClasses;
               let iconWrapperClasses = "w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-2xl border p-2 flex items-center justify-center badge-icon-box text-3xl ";
-              
+
               if (isCurrent) {
                 wrapperClasses += "bg-[#141824] border border-[#e5ad42] shadow-[0_0_15px_rgba(229,173,66,0.18),inset_0_0_0_1px_#d49a37]";
                 iconWrapperClasses += "bg-gradient-to-b from-[#18312b] to-[#0c1916] border-[#296856] ring-2 ring-emerald-500/20 drop-shadow-[0_0_10px_rgba(52,211,153,0.6)]";
@@ -135,6 +140,17 @@ export default function AchievementsPage() {
 
               const progressPercent = Math.min(100, (perfectDays / tier.threshold) * 100);
               const remaining = Math.max(0, tier.threshold - perfectDays);
+
+              const earnedDateStr = isUnlocked && perfectDatesAsc.length >= tier.threshold 
+                ? perfectDatesAsc[tier.threshold - 1] 
+                : null;
+              
+              let formattedEarnedDate = '';
+              if (earnedDateStr) {
+                formattedEarnedDate = new Date(earnedDateStr + 'T12:00:00').toLocaleDateString('en-US', {
+                  month: 'short', day: 'numeric', year: 'numeric'
+                });
+              }
 
               return (
                 <article key={tier.name} className={wrapperClasses}>
@@ -166,11 +182,16 @@ export default function AchievementsPage() {
 
                   <div className="shrink-0 flex flex-col items-end gap-2">
                     {isUnlocked ? (
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0a271d] border border-[#166542] text-[#34d399] text-xs font-semibold">
-                        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                        <span>Unlocked</span>
+                      <div className="flex flex-col items-end gap-1.5">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0a271d] border border-[#166542] text-[#34d399] text-xs font-semibold">
+                          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          <span>Unlocked</span>
+                        </div>
+                        {formattedEarnedDate && (
+                          <span className="text-[10px] text-slate-500 font-medium px-1">Earned {formattedEarnedDate}</span>
+                        )}
                       </div>
                     ) : (
                       <>

@@ -16,7 +16,7 @@ export default function DashboardPage() {
 
   // Export PNG handler
   function handleExportPng() {
-    exportHeatmapToPng('heatmap-container', `ProgressMap-Heatmap-${new Date().toISOString().slice(0,10)}.png`);
+    exportHeatmapToPng('heatmap-container', `ProgressMap-Heatmap-${new Date().toISOString().slice(0, 10)}.png`);
   }
 
   // Day click handler
@@ -52,10 +52,10 @@ export default function DashboardPage() {
         </main>
       </div>
 
-      <DayDrawer 
-        isOpen={isDrawerOpen} 
-        date={selectedDate} 
-        onClose={() => setIsDrawerOpen(false)} 
+      <DayDrawer
+        isOpen={isDrawerOpen}
+        date={selectedDate}
+        onClose={() => setIsDrawerOpen(false)}
       />
     </div>
   );
