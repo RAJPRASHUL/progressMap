@@ -2,6 +2,34 @@
 
 ProgressMap is a full-stack productivity dashboard for tracking daily tasks, completion streaks, perfect-day milestones, notes, and long-term progress.
 
+## Live Demo
+
+Try the deployed application:
+
+[Open ProgressMap](https://progress-map-iwav-git-main-rajprashuls-projects.vercel.app/auth)
+
+The live frontend is deployed on Vercel and connects to the Express API deployed on Render. Open the link above to register or sign in and use the dashboard.
+
+## Screenshots
+
+### Login and Registration
+
+The authentication screen allows new users to create an account and returning users to sign in securely.
+
+![ProgressMap login and registration screen](image/login.png)
+
+### Dashboard
+
+The dashboard brings together Today's Quest, the yearly activity heatmap, weekday averages, consistency, streak progress, and the badge wall.
+
+![ProgressMap dashboard](image/dashboard.png)
+
+### Achievements
+
+The Achievements page displays perfect-day badge tiers, unlocked milestones, progress toward the next tier, and the user's longest perfect streak.
+
+![ProgressMap achievements page](image/achievement.png)
+
 ## Features
 
 - User registration and login with JWT authentication
