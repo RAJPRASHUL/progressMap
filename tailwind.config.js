@@ -32,7 +32,7 @@ export default {
 
           // Muted & text
           muted: '#7E8B9B',
-          darkBg: '#090D14',
+          darkBg: '#0D1117',
 
           // Danger
           danger: '#EF4444',

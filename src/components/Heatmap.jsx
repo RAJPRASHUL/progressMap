@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { getTasks } from '../storage';
+import { getTasks, getSettings } from '../storage';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 
@@ -7,105 +7,127 @@ function toLocalDate(date = new Date()) {
   return date.toISOString().slice(0, 10);
 }
 
-/** Generate all dates from Jan 1 of `year` through Dec 31 (or today). */
-function getYearDates(year) {
-  const start = new Date(year, 0, 1);       // Jan 1
-  const now = new Date();
-  const endDate = year === now.getFullYear()
-    ? now                                     // only up to today for current year
-    : new Date(year, 11, 31);                 // full year for past years
-
+/** 
+ * GitHub logic:
+ * - Current year: Rolling 365 days ending today.
+ * - Past year: Jan 1 to Dec 31 of that year.
+ */
+function getDatesForView(year, currentYear) {
   const dates = [];
-  const d = new Date(start);
-  while (d <= endDate) {
-    dates.push(toLocalDate(d));
-    d.setDate(d.getDate() + 1);
+  if (year === currentYear) {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - 364); // 365 days total
+    
+    let d = new Date(start);
+    while (d <= end) {
+      dates.push(toLocalDate(d));
+      d.setDate(d.getDate() + 1);
+    }
+  } else {
+    const start = new Date(year, 0, 1);
+    const end = new Date(year, 11, 31);
+    
+    let d = new Date(start);
+    while (d <= end) {
+      dates.push(toLocalDate(d));
+      d.setDate(d.getDate() + 1);
+    }
   }
   return dates;
 }
 
 /** Map ratio (0–1) to intensity level 0–4. */
 function intensityLevel(ratio) {
-  if (ratio <= 0) return 0; // no tasks or 0%
-  if (ratio < 0.33) return 1; // dim
-  if (ratio < 0.66) return 2; // med
-  if (ratio < 1) return 3; // bright
-  return 4;                    // perfect (100%)
+  if (ratio <= 0) return 0;
+  if (ratio <= 0.33) return 1;
+  if (ratio <= 0.66) return 2;
+  if (ratio <= 0.99) return 3;
+  return 4;
 }
 
-const CELL_COLORS = [
-  '#1a2233',  // 0: empty / no tasks
-  '#143528',  // 1: dim
-  '#15803d',  // 2: med
-  '#22c55e',  // 3: bright
-  '#4ade80',  // 4: intense (perfect)
-];
-
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const GITHUB_COLORS = [
+  '#161b22',
+  '#0e4429',
+  '#006d32',
+  '#26a641',
+  '#39d353',
+];
 
 // ── Heatmap Component ─────────────────────────────────────────────────
 
 export default function Heatmap({ onDayClick }) {
   const currentYear = new Date().getFullYear();
+  const availableYears = [currentYear, currentYear - 1, currentYear - 2];
+  
   const [year, setYear] = useState(currentYear);
-  const [tasksByDate, setTasksByDate] = useState({});  // { 'YYYY-MM-DD': { total, done } }
+  const [tasksByDate, setTasksByDate] = useState({});
   const [loading, setLoading] = useState(true);
+  
+  // Tooltip state
   const [hoveredDay, setHoveredDay] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  
+  const [weekStart, setWeekStart] = useState('Monday');
 
   const today = toLocalDate();
 
-  // Fetch all tasks for the selected year
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
 
-    const from = `${year}-01-01`;
+    const from = year === currentYear ? getDatesForView(year, currentYear)[0] : `${year}-01-01`;
     const to = year === currentYear ? today : `${year}-12-31`;
 
-    getTasks(from, to)
-      .then((tasks) => {
-        if (cancelled) return;
-        // Aggregate tasks per date
-        const map = {};
-        tasks.forEach((t) => {
-          if (!map[t.date]) map[t.date] = { total: 0, done: 0 };
-          map[t.date].total += 1;
-          if (t.completed) map[t.date].done += 1;
-        });
-        setTasksByDate(map);
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!cancelled) setLoading(false);
+    Promise.all([
+      getTasks(from, to).catch(() => []),
+      getSettings().catch(() => null)
+    ]).then(([tasks, settings]) => {
+      if (cancelled) return;
+      
+      if (settings?.preferences?.weekStart) {
+        setWeekStart(settings.preferences.weekStart);
+      }
+
+      const map = {};
+      tasks.forEach((t) => {
+        if (!map[t.date]) map[t.date] = { total: 0, done: 0 };
+        map[t.date].total += 1;
+        if (t.completed) map[t.date].done += 1;
       });
+      setTasksByDate(map);
+      setLoading(false);
+    });
 
     return () => { cancelled = true; };
   }, [year, today, currentYear]);
 
-  // Build the grid: 7 rows (Mon–Sun) × N week columns
-  const { grid, monthLabels } = useMemo(() => {
-    const dates = getYearDates(year);
-    if (dates.length === 0) return { grid: [], monthLabels: [] };
+  // Build grid
+  const { grid, monthLabels, totalTasks } = useMemo(() => {
+    const dates = getDatesForView(year, currentYear);
+    if (dates.length === 0) return { grid: [], monthLabels: [], totalTasks: 0 };
 
-    // Find the weekday of Jan 1 (0=Sun..6=Sat). We use Mon=0 layout.
-    const jan1 = new Date(year, 0, 1);
-    const jan1Day = jan1.getDay(); // 0=Sun
-    // Convert to Mon=0: Mon=0,Tue=1,...,Sun=6
-    const startOffset = jan1Day === 0 ? 6 : jan1Day - 1;
+    const firstDate = new Date(dates[0] + 'T12:00:00');
+    const firstDay = firstDate.getDay();
+    
+    let startOffset;
+    if (weekStart === 'Monday') {
+      startOffset = firstDay === 0 ? 6 : firstDay - 1; 
+    } else {
+      startOffset = firstDay; 
+    }
 
-    // Build columns (weeks). Each column = 7 slots (Mon–Sun).
     const columns = [];
     let col = new Array(7).fill(null);
 
-    // Fill offset at start
     let dateIndex = 0;
     for (let i = startOffset; i < 7 && dateIndex < dates.length; i++) {
       col[i] = dates[dateIndex++];
     }
     columns.push(col);
 
-    // Fill remaining weeks
     while (dateIndex < dates.length) {
       col = new Array(7).fill(null);
       for (let i = 0; i < 7 && dateIndex < dates.length; i++) {
@@ -114,28 +136,33 @@ export default function Heatmap({ onDayClick }) {
       columns.push(col);
     }
 
-    // Compute month labels positioned at the first column where that month starts
     const labels = [];
     let lastMonth = -1;
     columns.forEach((week, colIdx) => {
-      for (const dateStr of week) {
-        if (!dateStr) continue;
-        const month = parseInt(dateStr.slice(5, 7), 10) - 1;
-        if (month !== lastMonth) {
+      const firstValid = week.find(d => d);
+      if (!firstValid) return;
+      const month = parseInt(firstValid.slice(5, 7), 10) - 1;
+      if (month !== lastMonth) {
+        // Only push label if it doesn't overlap too closely with the previous one
+        if (labels.length === 0 || colIdx - labels[labels.length - 1].colIdx > 2) {
           labels.push({ month, colIdx });
           lastMonth = month;
         }
-        break; // only check first non-null date in the week
       }
     });
 
-    return { grid: columns, monthLabels: labels };
-  }, [year]);
+    let total = 0;
+    Object.values(tasksByDate).forEach(info => total += info.done);
+
+    return { grid: columns, monthLabels: labels, totalTasks: total };
+  }, [year, currentYear, weekStart, tasksByDate]);
 
   const handleMouseEnter = useCallback((e, dateStr) => {
+    if (!dateStr) return;
     const rect = e.currentTarget.getBoundingClientRect();
     setHoveredDay(dateStr);
-    setTooltipPos({ x: rect.left + rect.width / 2, y: rect.top });
+    // Position tooltip centered above the cell
+    setTooltipPos({ x: rect.left + rect.width / 2, y: rect.top - 6 });
   }, []);
 
   const handleMouseLeave = useCallback(() => {
@@ -143,146 +170,175 @@ export default function Heatmap({ onDayClick }) {
   }, []);
 
   const handleCellClick = useCallback((dateStr) => {
-    if (dateStr && onDayClick) {
+    if (dateStr && onDayClick && dateStr <= today) {
       onDayClick(dateStr);
     }
-  }, [onDayClick]);
+  }, [onDayClick, today]);
 
-  // Tooltip data
   const tooltipData = useMemo(() => {
     if (!hoveredDay) return null;
     const info = tasksByDate[hoveredDay];
     const d = new Date(hoveredDay + 'T12:00:00');
-    const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     if (!info || info.total === 0) {
-      return { label, done: 0, total: 0, pct: 0 };
+      return { label, count: 'No tasks' };
     }
     return {
       label,
-      done: info.done,
-      total: info.total,
-      pct: Math.round((info.done / info.total) * 100),
+      count: `✓ ${info.done} / ${info.total} (${Math.round((info.done / info.total) * 100)}%)`
     };
   }, [hoveredDay, tasksByDate]);
+  
+  const dayLabels = weekStart === 'Monday' 
+    ? ['Mon', 'Wed', 'Fri'] 
+    : ['Sun', 'Tue', 'Thu'];
+
+  // 10px cell + 3px gap = 13px per column
+  const colWidth = 13; 
 
   return (
-    <section
-      id="heatmap-container"
-      className="lg:col-span-6 card-glass rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden"
-      data-purpose="my-year-heatmap"
-    >
-      <div>
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold tracking-wide text-white">My Year</h2>
-
-          {/* Year switcher */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setYear((y) => y - 1)}
-              className="w-6 h-6 rounded-md bg-[#1f283d] text-slate-400 hover:text-white text-xs flex items-center justify-center transition"
-              aria-label="Previous year"
-            >
-              ‹
-            </button>
-            <span className="text-xs font-medium text-slate-300 min-w-[36px] text-center">
-              {year}
-            </span>
-            <button
-              onClick={() => setYear((y) => Math.min(y + 1, currentYear))}
-              disabled={year >= currentYear}
-              className="w-6 h-6 rounded-md bg-[#1f283d] text-slate-400 hover:text-white text-xs flex items-center justify-center transition disabled:opacity-30 disabled:cursor-not-allowed"
-              aria-label="Next year"
-            >
-              ›
-            </button>
-          </div>
+    <section className="lg:col-span-6 flex flex-col md:flex-row gap-6 relative" data-purpose="my-year-heatmap">
+      
+      {/* Left Area: Graph and Headers */}
+      <div className="flex-1 min-w-0">
+        
+        {/* Top title */}
+        <div className="flex justify-between items-end mb-2 px-1">
+          <h2 className="text-sm font-semibold text-white">
+            {totalTasks} tasks completed in {year === currentYear ? 'the last year' : year}
+          </h2>
+          <span className="text-xs text-[#7d8590] cursor-pointer hover:text-[#58a6ff] transition">
+            Contribution settings ▾
+          </span>
         </div>
 
-        {/* Heatmap grid */}
-        {loading ? (
-          <div className="flex items-center justify-center min-h-[160px]">
-            <div className="text-slate-500 text-xs">Loading...</div>
-          </div>
-        ) : (
-          <div className="overflow-x-auto pb-2">
-            {/* Month labels row */}
-            <div className="flex mb-1 ml-0" style={{ minWidth: grid.length * 26 }}>
-              {monthLabels.map(({ month, colIdx }) => (
-                <span
-                  key={`${month}-${colIdx}`}
-                  className="text-[10px] text-slate-500 font-medium absolute"
-                  style={{
-                    position: 'relative',
-                    left: colIdx * 26,
-                  }}
-                >
-                  {MONTH_NAMES[month]}
-                </span>
-              ))}
+        {/* Graph Box */}
+        <div 
+          className="border rounded-md p-4 overflow-x-auto overflow-y-hidden"
+          style={{ backgroundColor: '#0d1117', borderColor: '#30363d' }}
+        >
+          {loading ? (
+            <div className="flex items-center justify-center min-h-[140px]">
+              <div className="text-[#7d8590] text-xs">Loading...</div>
             </div>
+          ) : (
+            <div className="flex gap-2">
+              
+              {/* Day Labels Row (Left axis) */}
+              <div className="flex flex-col text-[9px] text-[#7d8590] font-medium pt-[18px] pb-[4px]">
+                <span className="h-[13px] leading-[10px]">{dayLabels[0]}</span>
+                <span className="h-[13px] leading-[10px]"></span>
+                <span className="h-[13px] leading-[10px]">{dayLabels[1]}</span>
+                <span className="h-[13px] leading-[10px]"></span>
+                <span className="h-[13px] leading-[10px]">{dayLabels[2]}</span>
+                <span className="h-[13px] leading-[10px]"></span>
+                <span className="h-[13px] leading-[10px]"></span>
+              </div>
 
-            {/* Grid: 7 rows × N columns */}
-            <div
-              className="grid grid-rows-7 grid-flow-col gap-[5px]"
-              style={{ minWidth: grid.length * 26 }}
-            >
-              {grid.map((week, colIdx) =>
-                week.map((dateStr, rowIdx) => {
-                  if (!dateStr) {
-                    // Empty slot (before Jan 1 or after today)
-                    return (
-                      <div
-                        key={`empty-${colIdx}-${rowIdx}`}
-                        className="w-5 h-5 rounded-md"
-                        style={{ backgroundColor: 'transparent' }}
-                      />
-                    );
-                  }
-
-                  const info = tasksByDate[dateStr];
-                  const total = info?.total || 0;
-                  const done = info?.done || 0;
-                  const ratio = total > 0 ? done / total : 0;
-                  const level = total > 0 ? intensityLevel(ratio) : 0;
-                  const isPerfect = total > 0 && done === total;
-                  const isToday = dateStr === today;
-
-                  return (
-                    <div
-                      key={dateStr}
-                      className={`
-                        w-5 h-5 rounded-md relative cursor-pointer
-                        transition-all duration-150 hover:scale-125 hover:z-10
-                        ${isToday ? 'border-2 border-amber-500' : ''}
-                        ${isPerfect ? 'flex items-center justify-center' : ''}
-                      `}
-                      style={{
-                        backgroundColor: CELL_COLORS[level],
-                        ...(isToday ? { boxShadow: '0 0 10px rgba(245, 158, 11, 0.5)' } : {}),
-                      }}
-                      onMouseEnter={(e) => handleMouseEnter(e, dateStr)}
-                      onMouseLeave={handleMouseLeave}
-                      onClick={() => handleCellClick(dateStr)}
-                      title={dateStr}
+              {/* Grid Area */}
+              <div className="flex-1 relative pb-1">
+                {/* Month labels */}
+                <div className="relative h-[18px]" style={{ minWidth: grid.length * colWidth }}>
+                  {monthLabels.map(({ month, colIdx }) => (
+                    <span
+                      key={`${month}-${colIdx}`}
+                      className="text-[9px] text-[#7d8590] font-medium absolute top-0"
+                      style={{ left: colIdx * colWidth }}
                     >
-                      {isPerfect && (
-                        <span className="text-[8px] leading-none">👑</span>
-                      )}
-                    </div>
-                  );
-                })
-              )}
+                      {MONTH_NAMES[month]}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Cells */}
+                <div 
+                  className="flex flex-col flex-wrap h-[90px] content-start" 
+                  style={{ gap: '3px', width: grid.length * colWidth }}
+                >
+                  {grid.map((week, colIdx) =>
+                    week.map((dateStr, rowIdx) => {
+                      if (!dateStr) {
+                        return (
+                          <div
+                            key={`empty-${colIdx}-${rowIdx}`}
+                            className="w-[10px] h-[10px] rounded-[2px]"
+                            style={{ backgroundColor: 'transparent' }}
+                          />
+                        );
+                      }
+
+                      const info = tasksByDate[dateStr];
+                      const total = info?.total || 0;
+                      const done = info?.done || 0;
+                      const ratio = total > 0 ? done / total : 0;
+                      
+                      const level = total > 0 ? intensityLevel(ratio) : 0;
+                      const isFuture = dateStr > today;
+
+                      return (
+                        <div
+                          key={dateStr}
+                          className={`
+                            w-[10px] h-[10px] rounded-[2px] transition-all duration-75 outline-none
+                            ${isFuture ? 'pointer-events-none opacity-50' : 'cursor-pointer hover:ring-1 hover:ring-white hover:z-10 focus:ring-2 focus:ring-blue-500'}
+                          `}
+                          style={{
+                            backgroundColor: GITHUB_COLORS[level],
+                          }}
+                          onMouseEnter={(e) => handleMouseEnter(e, dateStr)}
+                          onMouseLeave={handleMouseLeave}
+                          onClick={() => handleCellClick(dateStr)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleCellClick(dateStr);
+                          }}
+                          tabIndex={isFuture ? -1 : 0}
+                          aria-label={`${dateStr}: ${total > 0 ? done + ' completed' : 'No tasks'}`}
+                        />
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Bottom Footer inside Box (Legend & Learn more) */}
+          <div className="mt-4 flex items-center justify-between text-[10px] text-[#7d8590]">
+            <a href="#" className="hover:text-[#58a6ff] transition">Learn how we count tasks</a>
+            <div className="flex items-center gap-1">
+              <span className="mr-1">Less</span>
+              <div className="w-[10px] h-[10px] rounded-[2px]" style={{ backgroundColor: GITHUB_COLORS[0] }} />
+              <div className="w-[10px] h-[10px] rounded-[2px]" style={{ backgroundColor: GITHUB_COLORS[1] }} />
+              <div className="w-[10px] h-[10px] rounded-[2px]" style={{ backgroundColor: GITHUB_COLORS[2] }} />
+              <div className="w-[10px] h-[10px] rounded-[2px]" style={{ backgroundColor: GITHUB_COLORS[3] }} />
+              <div className="w-[10px] h-[10px] rounded-[2px]" style={{ backgroundColor: GITHUB_COLORS[4] }} />
+              <span className="ml-1">More</span>
             </div>
           </div>
-        )}
+
+        </div>
       </div>
 
-      {/* Bottom Legend Gradient Bar */}
-      <div className="pt-4 flex items-center justify-between text-[11px] text-slate-500 font-medium">
-        <span>No tasks</span>
-        <div className="w-3/5 h-1.5 mx-3 rounded-full bg-gradient-to-r from-emerald-950 via-emerald-600 to-green-400" />
-        <span>Perfect day</span>
+      {/* Right Area: Year Switcher */}
+      <div className="w-full md:w-32 shrink-0 flex flex-row md:flex-col gap-1.5 md:pt-8">
+        {availableYears.map(y => {
+          const isActive = year === y;
+          return (
+            <button
+              key={y}
+              onClick={() => setYear(y)}
+              className={`
+                px-4 py-2 rounded-md text-xs font-medium text-left transition
+                ${isActive 
+                  ? 'bg-[#1f6feb] text-white' 
+                  : 'text-[#7d8590] hover:bg-[#30363d]/50'
+                }
+              `}
+            >
+              {y}
+            </button>
+          );
+        })}
       </div>
 
       {/* Floating tooltip */}
@@ -291,21 +347,13 @@ export default function Heatmap({ onDayClick }) {
           className="fixed z-50 pointer-events-none"
           style={{
             left: tooltipPos.x,
-            top: tooltipPos.y - 8,
+            top: tooltipPos.y,
             transform: 'translate(-50%, -100%)',
           }}
         >
-          <div className="bg-[#1f283d] text-slate-300 text-[10px] px-2.5 py-1 rounded-lg border border-slate-700 shadow-lg flex items-center space-x-1 whitespace-nowrap">
-            <span className="font-medium text-white">{tooltipData.label}</span>
-            <span className="text-slate-500">—</span>
-            {tooltipData.total > 0 ? (
-              <>
-                <span className="text-emerald-400 font-bold">✓ {tooltipData.done}</span>
-                <span>{tooltipData.done}/{tooltipData.total} · {tooltipData.pct}%</span>
-              </>
-            ) : (
-              <span className="text-slate-500">no tasks</span>
-            )}
+          <div className="bg-black/90 text-slate-100 text-[11px] px-3 py-2 rounded-md font-medium whitespace-nowrap shadow-xl">
+            <span className="text-slate-300 font-normal mr-2">{tooltipData.count}</span>
+            <span className="text-slate-400">on {tooltipData.label}</span>
           </div>
         </div>
       )}

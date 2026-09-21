@@ -26,7 +26,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0b0e17] p-3 sm:p-6 lg:p-10 flex items-start justify-center">
+    <div className="min-h-screen bg-[#0d1117] p-3 sm:p-6 lg:p-10 flex items-start justify-center">
       <div className="w-full max-w-[1520px] rounded-3xl p-4 sm:p-7 bg-[#0d121c] border border-white/5 shadow-2xl space-y-6">
         {/* ── Navbar ── */}
         <Navbar onExportPng={handleExportPng} />
