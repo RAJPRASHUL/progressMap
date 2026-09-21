@@ -1,8 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { getTasks } from '../storage';
 
-// ── Helpers ───────────────────────────────────────────────────────────
-
 function toLocalDate(date = new Date()) {
   return date.toISOString().slice(0, 10);
 }
@@ -17,8 +15,6 @@ function getPast30Days() {
   }
   return dates;
 }
-
-// Generates a smooth SVG path using cubic bezier curves
 function generateSmoothPath(points) {
   if (points.length === 0) return '';
   if (points.length === 1) return `M ${points[0].x},${points[0].y}`;
@@ -27,14 +23,11 @@ function generateSmoothPath(points) {
   for (let i = 0; i < points.length - 1; i++) {
     const p0 = points[i];
     const p1 = points[i + 1];
-    // Control points for a smooth curve (horizontal tangent)
     const cpX = (p0.x + p1.x) / 2;
     d += ` C ${cpX},${p0.y} ${cpX},${p1.y} ${p1.x},${p1.y}`;
   }
   return d;
 }
-
-// ── Component ─────────────────────────────────────────────────────────
 
 export default function ThirtyDayChart() {
   const [tasksByDate, setTasksByDate] = useState({});
@@ -71,40 +64,27 @@ export default function ThirtyDayChart() {
 
     return () => { cancelled = true; };
   }, [dates]);
-
-  // Compute points
   const points = useMemo(() => {
     return dates.map((date, i) => {
       const info = tasksByDate[date] || { total: 0, done: 0 };
       const pct = info.total > 0 ? info.done / info.total : 0;
-
-      // X: 0 to 500
       const x = (i / 29) * 500;
-      // Y: 150 (bottom/0%) to 20 (top/100%)
       const y = 150 - (pct * 130);
 
       return { x, y, date, ...info, pct: Math.round(pct * 100) };
     });
   }, [dates, tasksByDate]);
-
-  // Generate paths
   const linePath = useMemo(() => generateSmoothPath(points), [points]);
   const areaPath = useMemo(() => {
     if (!linePath) return '';
     return `${linePath} L 500,180 L 0,180 Z`;
   }, [linePath]);
-
-  // Find 100% days for peaks
   const perfectDays = points.filter(p => p.total > 0 && p.done === p.total);
-
-  // Mouse interaction
   function handleMouseMove(e) {
     if (!svgRef.current) return;
     const rect = svgRef.current.getBoundingClientRect();
     const xRatio = (e.clientX - rect.left) / rect.width;
     const dataX = xRatio * 500;
-
-    // Find closest point index
     let closestIdx = 0;
     let minDiff = Infinity;
     for (let i = 0; i < points.length; i++) {
@@ -131,7 +111,7 @@ export default function ThirtyDayChart() {
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-sm font-semibold tracking-wide text-white">30 Days</h2>
 
-        {/* Active Tooltip Badge (or placeholder) */}
+        
         {tooltipPoint && tooltipPoint.total > 0 ? (
           <div className="bg-[#1f283d] text-slate-300 text-[10px] px-2.5 py-1 rounded-full border border-slate-700 shadow-md flex items-center space-x-1">
             <span>
@@ -179,10 +159,10 @@ export default function ThirtyDayChart() {
               </linearGradient>
             </defs>
 
-            {/* Area Fill */}
+            
             <path d={areaPath} fill="url(#areaGrad)" />
 
-            {/* Line Stroke */}
+            
             <path
               d={linePath}
               fill="none"
@@ -191,7 +171,7 @@ export default function ThirtyDayChart() {
               strokeWidth="3.5"
             />
 
-            {/* Perfect Day Peaks (Always visible) */}
+            
             {perfectDays.map((p, idx) => (
               <g key={`peak-${idx}`}>
                 <circle cx={p.x} cy={p.y} r="7" fill={idx % 2 === 0 ? "#818cf8" : "#38bdf8"} fillOpacity="0.35" />
@@ -199,7 +179,7 @@ export default function ThirtyDayChart() {
               </g>
             ))}
 
-            {/* Hovered Point Indicator */}
+            
             {tooltipPoint && (
               <line
                 x1={tooltipPoint.x}

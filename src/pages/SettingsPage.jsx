@@ -3,23 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { getSettings, updateSettings, deleteAccount } from '../storage';
-import { useTheme } from '../context/ThemeContext';
 
 export default function SettingsPage() {
   const { user, setUser, signOut } = useAuth();
-  const { toggleTheme, theme } = useTheme();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  // Form state
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState('');
   const [preferences, setPreferences] = useState({
-    theme: 'dark',
-    dailyTarget: 3,
     weekStart: 'Monday'
   });
 
@@ -31,8 +25,6 @@ export default function SettingsPage() {
           setName(data.name || '');
           setAvatar(data.avatar || '');
           setPreferences({
-            theme: data.preferences?.theme || 'dark',
-            dailyTarget: data.preferences?.dailyTarget || 3,
             weekStart: data.preferences?.weekStart || 'Monday'
           });
         }
@@ -75,10 +67,6 @@ export default function SettingsPage() {
     const newPrefs = { ...preferences, [key]: value };
     setPreferences(newPrefs);
     
-    if (key === 'theme' && value !== theme) {
-      toggleTheme();
-    }
-
     try {
       const updatedUser = await updateSettings({ preferences: newPrefs });
       if (updatedUser && setUser) {
@@ -106,14 +94,6 @@ export default function SettingsPage() {
     navigate('/auth');
   };
 
-  const handleExportJSON = () => {
-    alert("Export JSON not fully implemented yet.");
-  };
-  
-  const handleImportJSON = () => {
-    alert("Import JSON not fully implemented yet.");
-  };
-
   const handleExportPNG = () => {
     navigate('/dashboard?export=true'); // Easy way to trigger export from dashboard
   };
@@ -127,8 +107,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-theme-page p-3 sm:p-6 lg:p-10 flex items-start justify-center transition-colors duration-300">
-      <div className="w-full max-w-[1520px] rounded-3xl p-4 sm:p-7 bg-theme-card border border-theme-border shadow-2xl space-y-6 transition-colors duration-300">
+    <div className="min-h-screen bg-theme-page p-0 flex items-start justify-center transition-colors duration-300">
+      <div className="w-full p-4 sm:p-7 space-y-6">
         <Navbar />
 
         <main className="max-w-2xl mx-auto px-4 py-8 text-theme-text selection:bg-amber-500/20">
@@ -156,7 +136,7 @@ export default function SettingsPage() {
 
           <div className="space-y-6">
             
-            {/* ── Profile Section ── */}
+            
             <section className="bg-theme-elevated border border-theme-border rounded-xl p-6 shadow-sm">
               <div className="flex items-center gap-4 mb-6">
                 <h2 className="text-[11px] font-bold tracking-wider text-[#e6b359] uppercase">Profile</h2>
@@ -194,7 +174,7 @@ export default function SettingsPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your name"
-                    className="w-full bg-theme-input border border-theme-border rounded-lg px-4 py-2.5 text-sm text-theme-text focus:outline-none focus:border-[#e6b359] focus:ring-1 focus:ring-[#e6b359] transition shadow-inner"
+                    className="w-full bg-white border border-theme-border rounded-lg px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-[#e6b359] focus:ring-1 focus:ring-[#e6b359] transition shadow-inner"
                   />
                 </div>
                 <div>
@@ -219,7 +199,7 @@ export default function SettingsPage() {
               </div>
             </section>
 
-            {/* ── Preferences Section ── */}
+            
             <section className="bg-theme-elevated border border-theme-border rounded-xl p-6 shadow-sm">
               <div className="flex items-center gap-4 mb-6">
                 <h2 className="text-[11px] font-bold tracking-wider text-[#e6b359] uppercase">Preferences</h2>
@@ -227,46 +207,6 @@ export default function SettingsPage() {
               </div>
               
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-bold text-theme-text">Theme</div>
-                    <div className="text-xs text-theme-muted mt-0.5">Choose your interface appearance.</div>
-                  </div>
-                  <div className="flex bg-theme-input border border-theme-border rounded-lg p-1">
-                    <button 
-                      onClick={() => handlePreferenceChange('theme', 'dark')}
-                      className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-semibold transition ${preferences.theme === 'dark' ? 'bg-[#e6b359] text-[#1a1202] shadow-sm' : 'text-theme-muted hover:text-theme-text'}`}
-                    >
-                      🌙 Dark
-                    </button>
-                    <button 
-                      onClick={() => handlePreferenceChange('theme', 'light')}
-                      className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-semibold transition ${preferences.theme === 'light' ? 'bg-[#e6b359] text-[#1a1202] shadow-sm' : 'text-theme-muted hover:text-theme-text'}`}
-                    >
-                      ☀️ Light
-                    </button>
-                  </div>
-                </div>
-
-                <div className="w-full h-px bg-theme-border" />
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-bold text-theme-text">Daily task target</div>
-                    <div className="text-xs text-theme-muted mt-0.5">Tasks needed for a "perfect day".</div>
-                  </div>
-                  <input 
-                    type="number"
-                    min="1"
-                    max="20"
-                    value={preferences.dailyTarget}
-                    onChange={(e) => handlePreferenceChange('dailyTarget', parseInt(e.target.value, 10) || 3)}
-                    className="w-20 bg-theme-input border border-theme-border rounded-lg px-3 py-1.5 text-sm font-bold text-theme-text text-center focus:outline-none focus:border-[#e6b359] shadow-inner"
-                  />
-                </div>
-
-                <div className="w-full h-px bg-theme-border" />
-
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-sm font-bold text-theme-text">Week starts on</div>
@@ -292,7 +232,7 @@ export default function SettingsPage() {
               </div>
             </section>
 
-            {/* ── Data Section ── */}
+            
             <section className="bg-theme-elevated border border-theme-border rounded-xl p-6 shadow-sm">
               <div className="flex items-center gap-4 mb-6">
                 <h2 className="text-[11px] font-bold tracking-wider text-[#e6b359] uppercase">Data</h2>
@@ -301,18 +241,6 @@ export default function SettingsPage() {
               
               <div className="flex flex-wrap items-center gap-3">
                 <button
-                  onClick={handleExportJSON}
-                  className="flex items-center gap-2 bg-theme-input hover:bg-theme-border border border-theme-border text-theme-text text-xs font-bold px-4 py-2.5 rounded-lg transition shadow-sm"
-                >
-                  ⬇ Export JSON
-                </button>
-                <button
-                  onClick={handleImportJSON}
-                  className="flex items-center gap-2 bg-theme-input hover:bg-theme-border border border-theme-border text-theme-text text-xs font-bold px-4 py-2.5 rounded-lg transition shadow-sm"
-                >
-                  ⬆ Import JSON
-                </button>
-                <button
                   onClick={handleExportPNG}
                   className="flex items-center gap-2 bg-theme-input hover:bg-theme-border border border-theme-border text-theme-text text-xs font-bold px-4 py-2.5 rounded-lg transition shadow-sm"
                 >
@@ -320,11 +248,11 @@ export default function SettingsPage() {
                 </button>
               </div>
               <p className="text-[11px] text-theme-muted mt-4">
-                Export your full history as JSON, restore from a backup, or download your streak heatmap as an image.
+                Download your streak heatmap as an image.
               </p>
             </section>
 
-            {/* ── Danger Zone ── */}
+            
             <section className="bg-theme-elevated border border-red-500/20 rounded-xl p-6 shadow-sm">
               <div className="flex items-center gap-4 mb-6">
                 <h2 className="text-[11px] font-bold tracking-wider text-red-500 uppercase">Danger Zone</h2>
@@ -345,7 +273,7 @@ export default function SettingsPage() {
               </div>
             </section>
             
-            {/* ── Logout Button ── */}
+            
             <div className="pt-2 pb-8">
               <button
                 onClick={handleLogout}

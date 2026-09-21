@@ -1,17 +1,11 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { getTasks, getSettings } from '../storage';
-
-// ── Helpers ───────────────────────────────────────────────────────────
 
 function toLocalDate(date = new Date()) {
   return date.toISOString().slice(0, 10);
 }
 
-/** 
- * GitHub logic:
- * - Current year: Rolling 365 days ending today.
- * - Past year: Jan 1 to Dec 31 of that year.
- */
+
 function getDatesForView(year, currentYear) {
   const dates = [];
   if (year === currentYear) {
@@ -37,7 +31,7 @@ function getDatesForView(year, currentYear) {
   return dates;
 }
 
-/** Map ratio (0–1) to intensity level 0–4. */
+
 function intensityLevel(ratio) {
   if (ratio <= 0) return 0;
   if (ratio <= 0.33) return 1;
@@ -56,8 +50,6 @@ const GITHUB_COLORS = [
   '#39d353',
 ];
 
-// ── Heatmap Component ─────────────────────────────────────────────────
-
 export default function Heatmap({ onDayClick }) {
   const currentYear = new Date().getFullYear();
   const availableYears = [currentYear, currentYear - 1, currentYear - 2];
@@ -65,8 +57,8 @@ export default function Heatmap({ onDayClick }) {
   const [year, setYear] = useState(currentYear);
   const [tasksByDate, setTasksByDate] = useState({});
   const [loading, setLoading] = useState(true);
-  
-  // Tooltip state
+  const [refreshKey, setRefreshKey] = useState(0);
+  const graphRef = useRef(null);
   const [hoveredDay, setHoveredDay] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   
@@ -102,9 +94,19 @@ export default function Heatmap({ onDayClick }) {
     });
 
     return () => { cancelled = true; };
-  }, [year, today, currentYear]);
+  }, [year, today, currentYear, refreshKey]);
 
-  // Build grid
+  useEffect(() => {
+    const handleTasksChanged = () => setRefreshKey((key) => key + 1);
+    window.addEventListener('tasks-changed', handleTasksChanged);
+    return () => window.removeEventListener('tasks-changed', handleTasksChanged);
+  }, []);
+
+  useEffect(() => {
+    const handleSettingsChanged = () => setRefreshKey((key) => key + 1);
+    window.addEventListener('settings-changed', handleSettingsChanged);
+    return () => window.removeEventListener('settings-changed', handleSettingsChanged);
+  }, []);
   const { grid, monthLabels, totalTasks } = useMemo(() => {
     const dates = getDatesForView(year, currentYear);
     if (dates.length === 0) return { grid: [], monthLabels: [], totalTasks: 0 };
@@ -120,21 +122,16 @@ export default function Heatmap({ onDayClick }) {
     }
 
     const columns = [];
-    let col = new Array(7).fill(null);
+    dates.forEach((dateStr, dateIndex) => {
+      const date = new Date(`${dateStr}T12:00:00`);
+      const rowIndex = weekStart === 'Monday'
+        ? (date.getDay() + 6) % 7
+        : date.getDay();
+      const columnIndex = Math.floor((dateIndex + startOffset) / 7);
 
-    let dateIndex = 0;
-    for (let i = startOffset; i < 7 && dateIndex < dates.length; i++) {
-      col[i] = dates[dateIndex++];
-    }
-    columns.push(col);
-
-    while (dateIndex < dates.length) {
-      col = new Array(7).fill(null);
-      for (let i = 0; i < 7 && dateIndex < dates.length; i++) {
-        col[i] = dates[dateIndex++];
-      }
-      columns.push(col);
-    }
+      if (!columns[columnIndex]) columns[columnIndex] = new Array(7).fill(null);
+      columns[columnIndex][rowIndex] = dateStr;
+    });
 
     const labels = [];
     let lastMonth = -1;
@@ -143,7 +140,6 @@ export default function Heatmap({ onDayClick }) {
       if (!firstValid) return;
       const month = parseInt(firstValid.slice(5, 7), 10) - 1;
       if (month !== lastMonth) {
-        // Only push label if it doesn't overlap too closely with the previous one
         if (labels.length === 0 || colIdx - labels[labels.length - 1].colIdx > 2) {
           labels.push({ month, colIdx });
           lastMonth = month;
@@ -161,7 +157,6 @@ export default function Heatmap({ onDayClick }) {
     if (!dateStr) return;
     const rect = e.currentTarget.getBoundingClientRect();
     setHoveredDay(dateStr);
-    // Position tooltip centered above the cell
     setTooltipPos({ x: rect.left + rect.width / 2, y: rect.top - 6 });
   }, []);
 
@@ -188,34 +183,35 @@ export default function Heatmap({ onDayClick }) {
       count: `✓ ${info.done} / ${info.total} (${Math.round((info.done / info.total) * 100)}%)`
     };
   }, [hoveredDay, tasksByDate]);
-  
-  const dayLabels = weekStart === 'Monday' 
-    ? ['Mon', 'Wed', 'Fri'] 
-    : ['Sun', 'Tue', 'Thu'];
+  const colWidth = 15;
+  const dayLabels = weekStart === 'Monday'
+    ? ['', 'Mon', '', 'Wed', '', 'Fri', '']
+    : ['Sun', '', 'Tue', '', 'Thu', '', 'Sat'];
 
-  // 10px cell + 3px gap = 13px per column
-  const colWidth = 13; 
+  useEffect(() => {
+    if (!loading && year === currentYear && graphRef.current) {
+      graphRef.current.scrollLeft = graphRef.current.scrollWidth;
+    }
+  }, [loading, year, currentYear, grid.length]);
 
   return (
-    <section className="lg:col-span-6 flex flex-col md:flex-row gap-6 relative" data-purpose="my-year-heatmap">
+    <section id="heatmap-container" className="lg:col-span-6 flex flex-col md:flex-row gap-6 relative" data-purpose="my-year-heatmap">
       
-      {/* Left Area: Graph and Headers */}
+      
       <div className="flex-1 min-w-0">
         
-        {/* Top title */}
+        
         <div className="flex justify-between items-end mb-2 px-1">
           <h2 className="text-sm font-semibold text-white">
             {totalTasks} tasks completed in {year === currentYear ? 'the last year' : year}
           </h2>
-          <span className="text-xs text-[#7d8590] cursor-pointer hover:text-[#58a6ff] transition">
-            Contribution settings ▾
-          </span>
         </div>
 
-        {/* Graph Box */}
+        
         <div 
+          ref={graphRef}
           className="border rounded-md p-4 overflow-x-auto overflow-y-hidden"
-          style={{ backgroundColor: '#0d1117', borderColor: '#30363d' }}
+          style={{ backgroundColor: '#000000', borderColor: '#30363d' }}
         >
           {loading ? (
             <div className="flex items-center justify-center min-h-[140px]">
@@ -224,25 +220,21 @@ export default function Heatmap({ onDayClick }) {
           ) : (
             <div className="flex gap-2">
               
-              {/* Day Labels Row (Left axis) */}
-              <div className="flex flex-col text-[9px] text-[#7d8590] font-medium pt-[18px] pb-[4px]">
-                <span className="h-[13px] leading-[10px]">{dayLabels[0]}</span>
-                <span className="h-[13px] leading-[10px]"></span>
-                <span className="h-[13px] leading-[10px]">{dayLabels[1]}</span>
-                <span className="h-[13px] leading-[10px]"></span>
-                <span className="h-[13px] leading-[10px]">{dayLabels[2]}</span>
-                <span className="h-[13px] leading-[10px]"></span>
-                <span className="h-[13px] leading-[10px]"></span>
+              
+              <div className="flex flex-col text-[9px] text-[#f0f6fc] font-medium pt-[18px] pb-[4px]">
+                {dayLabels.map((label, index) => (
+                  <span key={`${label}-${index}`} className="h-[15px] leading-[12px]">{label}</span>
+                ))}
               </div>
 
-              {/* Grid Area */}
+              
               <div className="flex-1 relative pb-1">
-                {/* Month labels */}
+                
                 <div className="relative h-[18px]" style={{ minWidth: grid.length * colWidth }}>
                   {monthLabels.map(({ month, colIdx }) => (
                     <span
                       key={`${month}-${colIdx}`}
-                      className="text-[9px] text-[#7d8590] font-medium absolute top-0"
+                      className="text-[9px] text-[#f0f6fc] font-medium absolute top-0"
                       style={{ left: colIdx * colWidth }}
                     >
                       {MONTH_NAMES[month]}
@@ -250,9 +242,9 @@ export default function Heatmap({ onDayClick }) {
                   ))}
                 </div>
 
-                {/* Cells */}
+                
                 <div 
-                  className="flex flex-col flex-wrap h-[90px] content-start" 
+                  className="flex flex-col flex-wrap h-[104px] content-start"
                   style={{ gap: '3px', width: grid.length * colWidth }}
                 >
                   {grid.map((week, colIdx) =>
@@ -261,7 +253,7 @@ export default function Heatmap({ onDayClick }) {
                         return (
                           <div
                             key={`empty-${colIdx}-${rowIdx}`}
-                            className="w-[10px] h-[10px] rounded-[2px]"
+                            className="w-[12px] h-[12px] rounded-[2px]"
                             style={{ backgroundColor: 'transparent' }}
                           />
                         );
@@ -279,11 +271,12 @@ export default function Heatmap({ onDayClick }) {
                         <div
                           key={dateStr}
                           className={`
-                            w-[10px] h-[10px] rounded-[2px] transition-all duration-75 outline-none
+                            w-[12px] h-[12px] rounded-[2px] transition-all duration-75 outline-none
                             ${isFuture ? 'pointer-events-none opacity-50' : 'cursor-pointer hover:ring-1 hover:ring-white hover:z-10 focus:ring-2 focus:ring-blue-500'}
                           `}
                           style={{
                             backgroundColor: GITHUB_COLORS[level],
+                            boxShadow: 'inset 0 0 0 1px rgba(27, 31, 36, 0.65)',
                           }}
                           onMouseEnter={(e) => handleMouseEnter(e, dateStr)}
                           onMouseLeave={handleMouseLeave}
@@ -302,9 +295,9 @@ export default function Heatmap({ onDayClick }) {
             </div>
           )}
 
-          {/* Bottom Footer inside Box (Legend & Learn more) */}
+          
           <div className="mt-4 flex items-center justify-between text-[10px] text-[#7d8590]">
-            <a href="#" className="hover:text-[#58a6ff] transition">Learn how we count tasks</a>
+            <span />
             <div className="flex items-center gap-1">
               <span className="mr-1">Less</span>
               <div className="w-[10px] h-[10px] rounded-[2px]" style={{ backgroundColor: GITHUB_COLORS[0] }} />
@@ -319,7 +312,7 @@ export default function Heatmap({ onDayClick }) {
         </div>
       </div>
 
-      {/* Right Area: Year Switcher */}
+      
       <div className="w-full md:w-32 shrink-0 flex flex-row md:flex-col gap-1.5 md:pt-8">
         {availableYears.map(y => {
           const isActive = year === y;
@@ -341,7 +334,7 @@ export default function Heatmap({ onDayClick }) {
         })}
       </div>
 
-      {/* Floating tooltip */}
+      
       {hoveredDay && tooltipData && (
         <div
           className="fixed z-50 pointer-events-none"

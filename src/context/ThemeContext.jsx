@@ -2,10 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 
 const ThemeContext = createContext(null);
 
-/**
- * ThemeProvider – manages dark/light class on <html>.
- * Persists preference to localStorage under 'pm_theme'.
- */
+
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
     try {
@@ -14,8 +11,6 @@ export function ThemeProvider({ children }) {
       return 'dark';
     }
   });
-
-  // Apply class to <html> whenever theme changes
   useEffect(() => {
     const root = document.documentElement;
     if (theme === 'dark') {
@@ -28,7 +23,6 @@ export function ThemeProvider({ children }) {
     try {
       localStorage.setItem('pm_theme', theme);
     } catch {
-      // ignore
     }
   }, [theme]);
 

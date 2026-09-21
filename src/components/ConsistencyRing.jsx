@@ -1,8 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getTasks } from '../storage';
 
-// ── Helpers ───────────────────────────────────────────────────────────
-
 function toLocalDate(date = new Date()) {
   return date.toISOString().slice(0, 10);
 }
@@ -18,11 +16,10 @@ function getPast30Days() {
   return dates;
 }
 
-// ── Component ─────────────────────────────────────────────────────────
-
 export default function ConsistencyRing() {
   const [tasksByDate, setTasksByDate] = useState({});
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const dates = useMemo(() => getPast30Days(), []);
 
@@ -50,56 +47,59 @@ export default function ConsistencyRing() {
       });
 
     return () => { cancelled = true; };
-  }, [dates]);
+  }, [dates, refreshKey]);
 
-  // Consistency = % of days with at least 1 task where ≥50% was done
+  useEffect(() => {
+    const handleTasksChanged = () => setRefreshKey((key) => key + 1);
+    window.addEventListener('tasks-changed', handleTasksChanged);
+    return () => window.removeEventListener('tasks-changed', handleTasksChanged);
+  }, []);
   const pct = useMemo(() => {
-    let activeDays = 0;
-    let consistentDays = 0;
+    let totalTasks = 0;
+    let completedTasks = 0;
 
     dates.forEach((d) => {
       const info = tasksByDate[d];
       if (info && info.total > 0) {
-        activeDays += 1;
-        if (info.done / info.total >= 0.5) consistentDays += 1;
+        totalTasks += info.total;
+        completedTasks += info.done;
       }
     });
 
-    return activeDays > 0 ? Math.round((consistentDays / activeDays) * 100) : 0;
+    return totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
   }, [dates, tasksByDate]);
-
-  // SVG ring math
   const radius = 14.5;
   const circumference = 2 * Math.PI * radius; // ~91.1
   const offset = circumference - (pct / 100) * circumference;
+  const progressColor = `hsl(${210 - pct * 0.8}, 85%, ${55 - pct * 0.25}%)`;
 
   return (
     <section
       className="card-glass rounded-2xl p-4 flex items-center space-x-4 flex-1"
       data-purpose="consistency-metric"
     >
-      {/* Ring */}
+      
       <div className="relative w-14 h-14 flex items-center justify-center flex-shrink-0">
         <svg className="w-14 h-14 transform -rotate-90" viewBox="0 0 36 36">
-          {/* Background track */}
+          
           <circle
             cx="18" cy="18" r={radius}
             fill="none"
             stroke="#1f283d"
             strokeWidth="3.5"
           />
-          {/* Cyan glow ring */}
+          
           <circle
             cx="18" cy="18" r={radius}
             fill="none"
-            stroke="#00e5ff"
+            stroke={progressColor}
             strokeWidth="3.5"
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={loading ? circumference : offset}
             style={{
-              filter: 'drop-shadow(0 0 8px rgba(0, 229, 255, 0.45))',
-              transition: 'stroke-dashoffset 1s ease-out',
+              filter: `drop-shadow(0 0 8px ${progressColor})`,
+              transition: 'stroke-dashoffset 1s ease-out, stroke 1s ease-out, filter 1s ease-out',
             }}
           />
         </svg>
@@ -108,7 +108,7 @@ export default function ConsistencyRing() {
         </div>
       </div>
 
-      {/* Label */}
+      
       <div>
         <h3 className="text-sm font-bold text-white">Consistency</h3>
         <p className="text-xs text-slate-400">last 30 days</p>

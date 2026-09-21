@@ -5,8 +5,6 @@ import { requireAuth } from '../middleware/auth.js';
 const router = express.Router();
 
 router.use(requireAuth);
-
-// GET /api/settings - Get current user settings/profile
 router.get('/', async (req, res) => {
   try {
     const user = await User.findById(req.userId);
@@ -19,8 +17,6 @@ router.get('/', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
-// PUT /api/settings - Update user settings/profile
 router.put('/', async (req, res) => {
   try {
     const { name, avatar, preferences } = req.body;
@@ -45,8 +41,6 @@ router.put('/', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
-// DELETE /api/settings/account - Delete account (Danger Zone)
 router.delete('/account', async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.userId);

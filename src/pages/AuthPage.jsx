@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { login, register } from '../storage';
 import { useAuth } from '../context/AuthContext';
 
-// ── Icon components ──────────────────────────────────────────────────
-
 function MailIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
@@ -82,8 +80,6 @@ function ErrorIcon() {
   );
 }
 
-// ── Validation helpers ───────────────────────────────────────────────
-
 function validateEmail(v) {
   if (!v.trim()) return 'Email is required';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())) return 'Please enter a valid email address';
@@ -101,22 +97,16 @@ function validateName(v) {
   return '';
 }
 
-// ── AuthPage ─────────────────────────────────────────────────────────
-
 export default function AuthPage() {
   const navigate = useNavigate();
   const { signIn } = useAuth();
 
   const [mode, setMode] = useState('login'); // 'login' | 'register'
-
-  // Form fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-  // Inline errors
   const [errors, setErrors] = useState({ email: '', password: '', name: '', form: '' });
   const [loading, setLoading] = useState(false);
 
@@ -166,8 +156,6 @@ export default function AuthPage() {
       setLoading(false);
     }
   }
-
-  // Field-level blur validation
   function onBlurEmail() {
     setErrors((prev) => ({ ...prev, email: validateEmail(email) }));
   }
@@ -179,13 +167,11 @@ export default function AuthPage() {
       setErrors((prev) => ({ ...prev, name: validateName(name) }));
     }
   }
-
-  // ── Render ──────────────────────────────────────────────────────────
   return (
     <div className="bg-[#F0F2F6] min-h-screen flex items-center justify-center p-3 sm:p-5">
       <main className="w-full max-w-md bg-white rounded-3xl shadow-sm sm:shadow-lg p-6 sm:p-8 flex flex-col justify-between">
         <div>
-          {/* ── Segmented tab switcher ─────────────────────────────── */}
+          
           <nav
             aria-label="Authentication Type"
             className="bg-[#EEF1F6] p-1.5 rounded-2xl flex items-center mb-8"
@@ -214,7 +200,7 @@ export default function AuthPage() {
             </button>
           </nav>
 
-          {/* ── Header ────────────────────────────────────────────── */}
+          
           <header className="mb-7">
             <h1 className="text-[1.75rem] font-bold tracking-tight text-slate-900 leading-tight">
               {mode === 'login' ? 'Welcome back' : 'Create account'}
@@ -226,9 +212,9 @@ export default function AuthPage() {
             </p>
           </header>
 
-          {/* ── Form ──────────────────────────────────────────────── */}
+          
           <form className="space-y-5" onSubmit={handleSubmit} noValidate>
-            {/* Name field (register only) */}
+            
             {mode === 'register' && (
               <div className="space-y-1.5">
                 <label className="block text-sm font-semibold text-slate-800" htmlFor="auth-name">
@@ -261,7 +247,7 @@ export default function AuthPage() {
               </div>
             )}
 
-            {/* Email field */}
+            
             <div className="space-y-1.5">
               <label className="block text-sm font-semibold text-slate-800" htmlFor="auth-email">
                 Email Address
@@ -292,7 +278,7 @@ export default function AuthPage() {
               )}
             </div>
 
-            {/* Password field */}
+            
             <div className="space-y-1.5">
               <label className="block text-sm font-semibold text-slate-800" htmlFor="auth-password">
                 Password
@@ -331,7 +317,7 @@ export default function AuthPage() {
               )}
             </div>
 
-            {/* Remember me + Forgot password (login only) */}
+            
             {mode === 'login' && (
               <div className="flex items-center justify-between pt-1">
                 <label className="inline-flex items-center cursor-pointer select-none">
@@ -353,7 +339,7 @@ export default function AuthPage() {
               </div>
             )}
 
-            {/* Form-level error */}
+            
             {errors.form && (
               <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl" role="alert">
                 <ErrorIcon />
@@ -361,7 +347,7 @@ export default function AuthPage() {
               </div>
             )}
 
-            {/* Submit button */}
+            
             <div className="pt-2">
               <button
                 type="submit"
@@ -380,7 +366,7 @@ export default function AuthPage() {
           </form>
         </div>
 
-        {/* ── Brand footer ────────────────────────────────────────── */}
+        
         <footer className="mt-12 pt-4 border-t border-slate-100 flex items-center justify-start">
           <span className="text-xs text-slate-400 font-normal tracking-wide">ProgressMap</span>
         </footer>

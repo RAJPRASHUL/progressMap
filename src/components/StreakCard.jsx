@@ -1,14 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getTasks } from '../storage';
-import { toLocalDate, computeStreak, BADGE_TIERS } from '../utils/milestones';
-
-function getCurrentBadge(streak) {
-  let current = BADGE_TIERS[0];
-  for (const tier of BADGE_TIERS) {
-    if (streak >= tier.threshold) current = tier;
-  }
-  return current;
-}
+import { toLocalDate, computePerfectDayStreak, BADGE_TIERS } from '../utils/milestones';
 
 function getNextBadge(streak) {
   for (const tier of BADGE_TIERS) {
@@ -17,20 +9,17 @@ function getNextBadge(streak) {
   return null; // maxed out
 }
 
-// ── Component ─────────────────────────────────────────────────────────
-
 export default function StreakCard() {
   const [tasksByDate, setTasksByDate] = useState({});
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-
-    // Fetch last 365 days for streak calculation
     const to = toLocalDate();
     const d = new Date();
-    d.setDate(d.getDate() - 365);
+    d.setDate(d.getDate() - 1000);
     const from = toLocalDate(d);
 
     getTasks(from, to)
@@ -50,9 +39,15 @@ export default function StreakCard() {
       });
 
     return () => { cancelled = true; };
+  }, [refreshKey]);
+
+  useEffect(() => {
+    const handleTasksChanged = () => setRefreshKey((key) => key + 1);
+    window.addEventListener('tasks-changed', handleTasksChanged);
+    return () => window.removeEventListener('tasks-changed', handleTasksChanged);
   }, []);
 
-  const streak = useMemo(() => computeStreak(tasksByDate), [tasksByDate]);
+  const streak = useMemo(() => computePerfectDayStreak(tasksByDate), [tasksByDate]);
 
   const nextBadge = getNextBadge(streak);
   const daysToNext = nextBadge ? nextBadge.threshold - streak : 0;
@@ -74,7 +69,7 @@ export default function StreakCard() {
         <span>{loading ? '—' : `${streak} day${streak !== 1 ? 's' : ''}`}</span>
       </div>
 
-      {/* Progress bar toward next badge */}
+      
       <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden mb-1.5">
         <div
           className="bg-gradient-to-r from-red-500 to-amber-400 h-1.5 rounded-full transition-all duration-700"

@@ -3,14 +3,9 @@ import Note from '../models/Note.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
-
-// All note routes require authentication
 router.use(requireAuth);
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
-
-// ── GET /api/notes?from=YYYY-MM-DD&to=YYYY-MM-DD ─────────────────────
-// Returns notes for date range.
 router.get('/', async (req, res) => {
   try {
     const { from, to } = req.query;
@@ -32,9 +27,6 @@ router.get('/', async (req, res) => {
     return res.status(500).json({ message: 'Failed to fetch notes' });
   }
 });
-
-// ── GET /api/notes/:date ─────────────────────────────────────────────
-// Retrieve a single day's note.
 router.get('/:date', async (req, res) => {
   try {
     const { date } = req.params;
@@ -57,9 +49,6 @@ router.get('/:date', async (req, res) => {
     return res.status(500).json({ message: 'Failed to fetch note' });
   }
 });
-
-// ── PUT /api/notes/:date ─────────────────────────────────────────────
-// Create or update a note for a given date (upsert).
 router.put('/:date', async (req, res) => {
   try {
     const { date } = req.params;

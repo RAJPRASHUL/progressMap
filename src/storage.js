@@ -1,12 +1,6 @@
-/**
- * storage.js — centralised data layer.
- * Every API call in the app goes through this module.
- * Components import functions from here and never call fetch() directly.
- */
+
 
 const API = '/api';
-
-// ── helpers ──────────────────────────────────────────────────────────
 
 function authHeaders() {
   const token = getToken();
@@ -34,9 +28,15 @@ async function request(method, path, body = null) {
   return data;
 }
 
-// ── token management (in-memory only) ────────────────────────────────
-
 let _token = null;
+
+function notifyTasksChanged() {
+  window.dispatchEvent(new Event('tasks-changed'));
+}
+
+function notifySettingsChanged() {
+  window.dispatchEvent(new Event('settings-changed'));
+}
 
 export function setToken(t) {
   _token = t;
@@ -47,8 +47,6 @@ export function getToken() {
 export function clearToken() {
   _token = null;
 }
-
-// ── auth ─────────────────────────────────────────────────────────────
 
 export async function register(email, password, name) {
   const data = await request('POST', '/auth/register', { email, password, name });
@@ -62,25 +60,27 @@ export async function login(email, password) {
   return data;
 }
 
-// ── tasks ────────────────────────────────────────────────────────────
-
 export async function getTasks(from, to) {
   return request('GET', `/tasks?from=${from}&to=${to}`);
 }
 
 export async function createTask(task) {
-  return request('POST', '/tasks', task);
+  const data = await request('POST', '/tasks', task);
+  notifyTasksChanged();
+  return data;
 }
 
 export async function updateTask(id, updates) {
-  return request('PATCH', `/tasks/${id}`, updates);
+  const data = await request('PATCH', `/tasks/${id}`, updates);
+  notifyTasksChanged();
+  return data;
 }
 
 export async function deleteTask(id) {
-  return request('DELETE', `/tasks/${id}`);
+  const data = await request('DELETE', `/tasks/${id}`);
+  notifyTasksChanged();
+  return data;
 }
-
-// ── notes ────────────────────────────────────────────────────────────
 
 export async function getNote(date) {
   return request('GET', `/notes/${date}`);
@@ -90,14 +90,14 @@ export async function saveNote(date, text) {
   return request('PUT', `/notes/${date}`, { text });
 }
 
-// ── settings ─────────────────────────────────────────────────────────
-
 export async function getSettings() {
   return request('GET', '/settings');
 }
 
 export async function updateSettings(settings) {
-  return request('PUT', '/settings', settings);
+  const data = await request('PUT', '/settings', settings);
+  notifySettingsChanged();
+  return data;
 }
 
 export async function deleteAccount() {

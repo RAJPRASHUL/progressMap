@@ -6,15 +6,11 @@ const MilestoneContext = createContext({});
 export function MilestoneProvider({ children }) {
   const [toastQueue, setToastQueue] = useState([]);
   const [currentToast, setCurrentToast] = useState(null);
-
-  // Process toast queue
   useEffect(() => {
     if (toastQueue.length > 0 && !currentToast) {
       setCurrentToast(toastQueue[0]);
     }
   }, [toastQueue, currentToast]);
-
-  // Auto-dismiss toast after 4s
   useEffect(() => {
     if (currentToast) {
       const timer = setTimeout(() => {
@@ -36,7 +32,7 @@ export function MilestoneProvider({ children }) {
     <MilestoneContext.Provider value={{ checkAndNotifyUnlocks }}>
       {children}
       
-      {/* Global Toast Container */}
+      
       {currentToast && (
         <div className="fixed bottom-6 right-6 z-50 animate-bounce-in">
           <div className="bg-[#1f283d] border border-indigo-500/50 shadow-2xl shadow-indigo-500/20 rounded-2xl p-4 pr-12 flex items-center space-x-4 relative overflow-hidden">

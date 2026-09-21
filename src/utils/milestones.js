@@ -1,21 +1,16 @@
 export const BADGE_TIERS = [
-  { name: 'Spark',   threshold: 3,  emoji: '⚡', color: 'cyan',   desc: 'Complete 3-day streak' },
-  { name: 'Flame',   threshold: 7,  emoji: '🔥', color: 'amber',  desc: 'Complete 7-day streak' },
-  { name: 'Phoenix', threshold: 14, emoji: '🏆', color: 'amber',  desc: 'Complete 14-day streak' },
-  { name: 'Titan',   threshold: 30, emoji: '💎', color: 'amber',  desc: 'Complete 30-day streak' },
-  { name: 'Legend',  threshold: 60, emoji: '👑', color: 'amber',  desc: 'Complete 60-day streak' },
+  { name: 'Night Owl', threshold: 1,    emoji: '🦉', color: 'cyan',  desc: 'Complete 1 consecutive perfect day' },
+  { name: 'Spark',     threshold: 3,    emoji: '⚡', color: 'cyan',  desc: 'Complete 3 consecutive perfect days' },
+  { name: 'Flame',     threshold: 7,    emoji: '🔥', color: 'amber', desc: 'Complete 7 consecutive perfect days' },
+  { name: 'Phoenix',   threshold: 14,   emoji: '🏆', color: 'amber', desc: 'Complete 14 consecutive perfect days' },
+  { name: 'Dragon',    threshold: 30,   emoji: '🐉', color: 'amber', desc: 'Complete 30 consecutive perfect days' },
+  { name: 'Titan',     threshold: 60,   emoji: '💎', color: 'amber', desc: 'Complete 60 consecutive perfect days' },
+  { name: 'Mythic',    threshold: 100,  emoji: '🌌', color: 'amber', desc: 'Complete 100 consecutive perfect days' },
+  { name: 'Immortal',  threshold: 365,  emoji: '🦁', color: 'amber', desc: 'Complete 365 consecutive perfect days' },
+  { name: 'Legend',    threshold: 1000, emoji: '👑', color: 'amber', desc: 'Complete 1000 consecutive perfect days' },
 ];
 
-export const JOURNEY_TIERS = [
-  { name: 'Night Owl', threshold: 1,   emoji: '🦉' },
-  { name: 'Spark',     threshold: 3,   emoji: '⚡' },
-  { name: 'Flame',     threshold: 7,   emoji: '🔥' },
-  { name: 'Phoenix',   threshold: 14,  emoji: '🏆' },
-  { name: 'Dragon',    threshold: 30,  emoji: '🐉' },
-  { name: 'Titan',     threshold: 60,  emoji: '💎' },
-  { name: 'Mythic',    threshold: 100, emoji: '🌌' },
-  { name: 'Immortal',  threshold: 365, emoji: '🦁' }
-];
+export const JOURNEY_TIERS = BADGE_TIERS;
 
 export const ACHIEVEMENT_BADGES = [
   { id: 'first_task',   name: 'First Step',    emoji: '🌟', check: (stats) => stats.totalTasks >= 1, desc: 'Complete your first task' },
@@ -56,11 +51,51 @@ export function computeStreak(tasksByDate) {
   return streak;
 }
 
+export function computePerfectDayStreak(tasksByDate) {
+  let streak = 0;
+  const date = new Date();
+
+  while (streak < 1000) {
+    const info = tasksByDate[toLocalDate(date)];
+    if (!info || info.total === 0 || info.done !== info.total) break;
+    streak += 1;
+    date.setDate(date.getDate() - 1);
+  }
+
+  return streak;
+}
+
+export function computeLongestPerfectStreak(tasksByDate) {
+  let longest = 0;
+  let current = 0;
+  let previousDate = null;
+
+  Object.keys(tasksByDate).sort().forEach((dateStr) => {
+    const info = tasksByDate[dateStr];
+    const date = new Date(`${dateStr}T12:00:00`);
+    const isPerfect = info.total > 0 && info.done === info.total;
+    const daysSincePrevious = previousDate
+      ? Math.floor((date - previousDate) / (1000 * 60 * 60 * 24))
+      : null;
+
+    if (isPerfect && daysSincePrevious === 1) {
+      current += 1;
+    } else if (isPerfect) {
+      current = 1;
+    } else {
+      current = 0;
+    }
+
+    if (isPerfect) longest = Math.max(longest, current);
+    previousDate = date;
+  });
+
+  return longest;
+}
+
 export function computeLongestStreak(tasksByDate) {
   let longest = 0;
   let current = 0;
-  
-  // Sort dates to walk forward
   const sortedDates = Object.keys(tasksByDate).sort();
   let prevDate = null;
 
@@ -99,8 +134,6 @@ export function computeStats(tasksByDate) {
 
   return { totalTasks, totalDone, perfectDays };
 }
-
-// Function to compare old and new unlocked badges to find new unlocks
 export function getNewlyUnlockedAchievements(oldStats, newStats) {
   const oldUnlocked = ACHIEVEMENT_BADGES.filter(b => b.check(oldStats)).map(b => b.id);
   const newUnlocked = ACHIEVEMENT_BADGES.filter(b => b.check(newStats));

@@ -4,9 +4,7 @@ import User from '../models/User.js';
 
 const router = express.Router();
 
-/**
- * Generate a signed JWT for a given user
- */
+
 function generateToken(user) {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
@@ -22,13 +20,9 @@ function generateToken(user) {
     { expiresIn: '30d' }
   );
 }
-
-// ── POST /api/auth/register ──────────────────────────────────────────
 router.post('/register', async (req, res) => {
   try {
     const { email, password, name } = req.body || {};
-
-    // Validate email presence
     if (!email || typeof email !== 'string' || !email.trim()) {
       const msg = 'Email is required';
       return res.status(400).json({ error: msg, message: msg });
@@ -40,8 +34,6 @@ router.post('/register', async (req, res) => {
       const msg = 'Please provide a valid email address';
       return res.status(400).json({ error: msg, message: msg });
     }
-
-    // Validate password presence and length
     if (!password || typeof password !== 'string') {
       const msg = 'Password is required';
       return res.status(400).json({ error: msg, message: msg });
@@ -51,21 +43,15 @@ router.post('/register', async (req, res) => {
       const msg = 'Password must be at least 8 characters';
       return res.status(400).json({ error: msg, message: msg });
     }
-
-    // Check if user already exists
     const existingUser = await User.findOne({ email: trimmedEmail });
     if (existingUser) {
       const msg = 'An account with this email already exists';
       return res.status(409).json({ error: msg, message: msg });
     }
-
-    // Set name from payload or derive from email
     const resolvedName =
       name && typeof name === 'string' && name.trim()
         ? name.trim()
         : trimmedEmail.split('@')[0];
-
-    // Create user — pre-save hook handles bcrypt hashing
     const newUser = new User({
       email: trimmedEmail,
       password,
@@ -97,13 +83,9 @@ router.post('/register', async (req, res) => {
     return res.status(500).json({ error: msg, message: msg });
   }
 });
-
-// ── POST /api/auth/login ─────────────────────────────────────────────
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body || {};
-
-    // Validate inputs
     if (!email || typeof email !== 'string' || !email.trim()) {
       const msg = 'Email is required';
       return res.status(400).json({ error: msg, message: msg });
@@ -115,22 +97,16 @@ router.post('/login', async (req, res) => {
     }
 
     const trimmedEmail = email.trim().toLowerCase();
-
-    // Find user by email
     const user = await User.findOne({ email: trimmedEmail });
     if (!user) {
       const msg = 'Invalid email or password';
       return res.status(401).json({ error: msg, message: msg });
     }
-
-    // Verify password with bcrypt
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       const msg = 'Invalid email or password';
       return res.status(401).json({ error: msg, message: msg });
     }
-
-    // Sign JWT token
     const token = generateToken(user);
 
     return res.json({

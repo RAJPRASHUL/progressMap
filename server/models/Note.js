@@ -25,8 +25,6 @@ const noteSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
-// Compound index: one note per user per date
 noteSchema.index({ userId: 1, date: 1 }, { unique: true });
 
 const Note = mongoose.model('Note', noteSchema);

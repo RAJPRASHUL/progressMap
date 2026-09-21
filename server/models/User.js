@@ -47,8 +47,6 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
-// Pre-save hook: Hash password with bcrypt before saving
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
     return next();
@@ -62,13 +60,9 @@ userSchema.pre('save', async function (next) {
     next(err);
   }
 });
-
-// Compare candidate password against stored bcrypt hash
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
-
-// Safe representation of user (exclude password hash)
 userSchema.methods.toSafeObject = function () {
   const obj = this.toObject();
   delete obj.password;

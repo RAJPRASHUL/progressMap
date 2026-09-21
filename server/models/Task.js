@@ -33,8 +33,6 @@ const taskSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
-// Compound index for efficient per-user, date-range queries
 taskSchema.index({ userId: 1, date: 1 });
 
 const Task = mongoose.model('Task', taskSchema);

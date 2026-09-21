@@ -16,8 +16,6 @@ export async function exportHeatmapToPng(elementId = 'heatmap-container', fileNa
     });
 
     const image = canvas.toDataURL('image/png', 1.0);
-    
-    // Create a temporary link element to trigger the download
     const link = document.createElement('a');
     link.href = image;
     link.download = fileName;

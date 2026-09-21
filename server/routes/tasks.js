@@ -3,12 +3,7 @@ import Task from '../models/Task.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
-
-// All task routes require authentication
 router.use(requireAuth);
-
-// ── GET /api/tasks?from=YYYY-MM-DD&to=YYYY-MM-DD ────────────────────
-// Returns all tasks for the authenticated user within a date range.
 router.get('/', async (req, res) => {
   try {
     const { from, to } = req.query;
@@ -32,9 +27,6 @@ router.get('/', async (req, res) => {
     return res.status(500).json({ message: 'Failed to fetch tasks' });
   }
 });
-
-// ── POST /api/tasks ──────────────────────────────────────────────────
-// Create a new task.
 router.post('/', async (req, res) => {
   try {
     const { title, date, completed, order } = req.body;
@@ -44,8 +36,6 @@ router.post('/', async (req, res) => {
         message: 'title and date are required',
       });
     }
-
-    // Count existing tasks for this user + date to auto-set order
     const existingCount = await Task.countDocuments({
       userId: req.userId,
       date,
@@ -71,15 +61,10 @@ router.post('/', async (req, res) => {
     return res.status(500).json({ message: 'Failed to create task' });
   }
 });
-
-// ── PATCH /api/tasks/:id ─────────────────────────────────────────────
-// Update a task (toggle completed, rename, reorder).
 router.patch('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const updates = {};
-
-    // Only allow specific fields to be updated
     if (req.body.title !== undefined) updates.title = req.body.title.trim();
     if (req.body.completed !== undefined) updates.completed = req.body.completed;
     if (req.body.order !== undefined) updates.order = req.body.order;
@@ -107,9 +92,6 @@ router.patch('/:id', async (req, res) => {
     return res.status(500).json({ message: 'Failed to update task' });
   }
 });
-
-// ── DELETE /api/tasks/:id ────────────────────────────────────────────
-// Delete a task.
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;

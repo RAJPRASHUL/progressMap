@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Navbar from '../components/Navbar';
 import { getTasks } from '../storage';
-import { JOURNEY_TIERS, computeStats, computeLongestStreak } from '../utils/milestones';
+import { JOURNEY_TIERS, computeStats, computeLongestPerfectStreak } from '../utils/milestones';
 
 export default function AchievementsPage() {
   const [tasks, setTasks] = useState([]);
@@ -12,7 +12,7 @@ export default function AchievementsPage() {
       try {
         const d = new Date();
         const to = d.toISOString().slice(0, 10);
-        d.setFullYear(d.getFullYear() - 1);
+        d.setDate(d.getDate() - 1000);
         const from = d.toISOString().slice(0, 10);
 
         const data = await getTasks(from, to);
@@ -26,7 +26,7 @@ export default function AchievementsPage() {
     loadTasks();
   }, []);
 
-  const { tasksByDate, perfectDays, longestStreak, perfectDatesAsc } = useMemo(() => {
+  const { tasksByDate, perfectDays, longestPerfectStreak, perfectDatesAsc } = useMemo(() => {
     const map = {};
     tasks.forEach(t => {
       if (!map[t.date]) map[t.date] = { total: 0, done: 0 };
@@ -35,7 +35,7 @@ export default function AchievementsPage() {
     });
 
     const stats = computeStats(map);
-    const longest = computeLongestStreak(map);
+    const longestPerfect = computeLongestPerfectStreak(map);
 
     const perfectDatesAsc = Object.keys(map)
       .filter(date => map[date].total > 0 && map[date].total === map[date].done)
@@ -44,27 +44,25 @@ export default function AchievementsPage() {
     return {
       tasksByDate: map,
       perfectDays: stats.perfectDays,
-      longestStreak: longest,
+      longestPerfectStreak: longestPerfect,
       perfectDatesAsc
     };
   }, [tasks]);
-
-  // Determine current tier based on perfectDays
   let currentTierIndex = -1;
   for (let i = 0; i < JOURNEY_TIERS.length; i++) {
-    if (perfectDays >= JOURNEY_TIERS[i].threshold) {
+    if (longestPerfectStreak >= JOURNEY_TIERS[i].threshold) {
       currentTierIndex = i;
     }
   }
 
-  const currentTier = currentTierIndex >= 0 ? JOURNEY_TIERS[currentTierIndex] : { name: 'Beginner', emoji: '🌱' };
+  const currentTier = currentTierIndex >= 0 ? JOURNEY_TIERS[currentTierIndex] : { name: 'None yet', emoji: '—' };
   const nextTier = currentTierIndex + 1 < JOURNEY_TIERS.length ? JOURNEY_TIERS[currentTierIndex + 1] : null;
 
   const nextBadgeIn = nextTier ? Math.max(0, nextTier.threshold - perfectDays) : 0;
 
   return (
-    <div className="min-h-screen bg-[#0d1117] p-3 sm:p-6 lg:p-10 flex items-start justify-center">
-      <div className="w-full max-w-[1520px] rounded-3xl p-4 sm:p-7 bg-[#0d121c] border border-white/5 shadow-2xl space-y-6">
+    <div className="min-h-screen bg-[#0d121c] p-0 flex items-start justify-center">
+      <div className="w-full p-4 sm:p-7 space-y-6">
         <Navbar />
 
         <main className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8 text-slate-200 selection:bg-amber-500/20">
@@ -89,7 +87,7 @@ export default function AchievementsPage() {
             <div className="bg-[#141823] border border-[#222938] rounded-xl p-4 flex flex-col justify-between">
               <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Longest Streak</span>
               <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-2xl sm:text-3xl font-extrabold text-white">{longestStreak}</span>
+                <span className="text-2xl sm:text-3xl font-extrabold text-white">{longestPerfectStreak}</span>
                 <span className="text-xs text-slate-400 font-medium">days</span>
               </div>
             </div>
@@ -119,10 +117,8 @@ export default function AchievementsPage() {
             <div className="absolute left-[3.15rem] top-8 bottom-8 w-[2px] bg-gradient-to-b from-[#7e5f29] via-[#85652f] to-[#252c3c] z-0 pointer-events-none hidden sm:block"></div>
 
             {JOURNEY_TIERS.map((tier, index) => {
-              const isUnlocked = perfectDays >= tier.threshold;
+              const isUnlocked = longestPerfectStreak >= tier.threshold;
               const isCurrent = index === currentTierIndex;
-
-              // Styles based on status
               const baseClasses = "relative z-10 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 transition ";
               let wrapperClasses = baseClasses;
               let iconWrapperClasses = "w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-2xl border p-2 flex items-center justify-center badge-icon-box text-3xl ";
@@ -138,8 +134,8 @@ export default function AchievementsPage() {
                 iconWrapperClasses += "bg-gradient-to-b from-[#252830] to-[#16181e] border-[#373c47] opacity-65 grayscale";
               }
 
-              const progressPercent = Math.min(100, (perfectDays / tier.threshold) * 100);
-              const remaining = Math.max(0, tier.threshold - perfectDays);
+              const progressPercent = Math.min(100, (longestPerfectStreak / tier.threshold) * 100);
+              const remaining = Math.max(0, tier.threshold - longestPerfectStreak);
 
               const earnedDateStr = isUnlocked && perfectDatesAsc.length >= tier.threshold 
                 ? perfectDatesAsc[tier.threshold - 1] 

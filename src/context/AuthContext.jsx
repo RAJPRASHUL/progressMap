@@ -3,10 +3,7 @@ import { setToken, clearToken, getToken } from '../storage';
 
 const AuthContext = createContext(null);
 
-/**
- * AuthProvider – wraps the app and exposes:
- *   user, token, isAuthenticated, signIn, signOut
- */
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 

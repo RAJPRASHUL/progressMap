@@ -6,6 +6,7 @@ export default function DayDrawer({ isOpen, date, onClose }) {
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [savingNote, setSavingNote] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!isOpen || !date) return;
@@ -31,7 +32,13 @@ export default function DayDrawer({ isOpen, date, onClose }) {
       });
 
     return () => { cancelled = true; };
-  }, [isOpen, date]);
+  }, [isOpen, date, refreshKey]);
+
+  useEffect(() => {
+    const handleTasksChanged = () => setRefreshKey((key) => key + 1);
+    window.addEventListener('tasks-changed', handleTasksChanged);
+    return () => window.removeEventListener('tasks-changed', handleTasksChanged);
+  }, []);
 
   async function handleNoteBlur() {
     if (!date) return;
@@ -46,8 +53,6 @@ export default function DayDrawer({ isOpen, date, onClose }) {
   }
 
   if (!isOpen) return null;
-
-  // Format date header
   const d = new Date(date + 'T12:00:00');
   const dateHeader = d.toLocaleDateString('en-US', {
     weekday: 'long',
@@ -63,17 +68,17 @@ export default function DayDrawer({ isOpen, date, onClose }) {
 
   return (
     <>
-      {/* Overlay */}
+      
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity"
         onClick={onClose}
       />
 
-      {/* Drawer */}
+      
       <div
         className="fixed top-0 right-0 h-full w-full sm:w-[400px] bg-[#0d121c] border-l border-white/5 shadow-2xl z-50 flex flex-col transform transition-transform duration-300 translate-x-0"
       >
-        {/* Header */}
+        
         <div className="p-6 border-b border-white/5 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-white">{dateHeader}</h2>
@@ -89,10 +94,10 @@ export default function DayDrawer({ isOpen, date, onClose }) {
           </button>
         </div>
 
-        {/* Content */}
+        
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
-          {/* Tasks List */}
+          
           <div>
             <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
               Tasks
@@ -127,7 +132,7 @@ export default function DayDrawer({ isOpen, date, onClose }) {
             )}
           </div>
 
-          {/* Note Field */}
+          
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">

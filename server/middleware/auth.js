@@ -1,10 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-/**
- * Authentication middleware guard
- * Validates the Bearer token in the Authorization header.
- * Attaches decoded payload to req.user and req.userId.
- */
+
 export function requireAuth(req, res, next) {
   const authHeader = req.headers.authorization;
 

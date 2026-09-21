@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getTasks, createTask, updateTask, deleteTask } from '../storage';
 
-// ── Helpers ───────────────────────────────────────────────────────────
-
 function toLocalDate(date = new Date()) {
   return date.toISOString().slice(0, 10);
 }
@@ -17,8 +15,6 @@ function dayName(date = new Date()) {
   return date.toLocaleDateString('en-US', { weekday: 'long' });
 }
 
-// ── Circular Progress Ring ────────────────────────────────────────────
-
 function ProgressRing({ percent }) {
   const CIRCUMFERENCE = 2 * Math.PI * 14.5; // r = 14.5
   const offset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE;
@@ -26,12 +22,12 @@ function ProgressRing({ percent }) {
   return (
     <div className="relative w-16 h-16 flex items-center justify-center flex-shrink-0">
       <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
-        {/* Background Ring */}
+        
         <circle
           cx="18" cy="18" r="14.5"
           fill="none" stroke="#1f283d" strokeWidth="3.5"
         />
-        {/* Filled Ring */}
+        
         <circle
           cx="18" cy="18" r="14.5"
           fill="none" stroke="url(#questPurpleGrad)"
@@ -54,8 +50,6 @@ function ProgressRing({ percent }) {
   );
 }
 
-// ── Task Row ──────────────────────────────────────────────────────────
-
 function TaskRow({ task, onToggle, onDelete }) {
   const [deleting, setDeleting] = useState(false);
 
@@ -68,9 +62,9 @@ function TaskRow({ task, onToggle, onDelete }) {
   return (
     <div
       className="group flex items-center space-x-3 text-xs cursor-pointer"
-      onClick={() => onToggle(task._id, !task.completed)}
+      onClick={() => !task.completed && onToggle(task._id, true)}
     >
-      {/* Checkbox circle */}
+      
       {task.completed ? (
         <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-[10px] flex-shrink-0 transition-all">
           ✓
@@ -79,7 +73,7 @@ function TaskRow({ task, onToggle, onDelete }) {
         <span className="w-4 h-4 rounded-full border border-slate-600 bg-transparent flex items-center justify-center flex-shrink-0 hover:border-indigo-400 transition-all" />
       )}
 
-      {/* Title */}
+      
       <span
         className={`flex-1 transition-colors ${task.completed
             ? 'line-through text-slate-500'
@@ -89,7 +83,7 @@ function TaskRow({ task, onToggle, onDelete }) {
         {task.title}
       </span>
 
-      {/* Delete button (visible on hover) */}
+      
       <button
         onClick={handleDelete}
         disabled={deleting}
@@ -102,8 +96,6 @@ function TaskRow({ task, onToggle, onDelete }) {
   );
 }
 
-// ── Main Component ────────────────────────────────────────────────────
-
 export default function TodaysQuest() {
   const today = toLocalDate();
   const [tasks, setTasks] = useState([]);
@@ -112,8 +104,6 @@ export default function TodaysQuest() {
   const [adding, setAdding] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const inputRef = useRef(null);
-
-  // ── Fetch tasks ─────────────────────────────────────────────────
   const fetchTasks = useCallback(async () => {
     try {
       const yd = yesterday();
@@ -131,10 +121,12 @@ export default function TodaysQuest() {
     fetchTasks();
   }, [fetchTasks]);
 
-  // ── Add task ────────────────────────────────────────────────────
+  useEffect(() => {
+    window.addEventListener('tasks-changed', fetchTasks);
+    return () => window.removeEventListener('tasks-changed', fetchTasks);
+  }, [fetchTasks]);
   async function handleAdd() {
     if (adding) {
-      // Submit the new task
       const title = newTitle.trim();
       if (!title) {
         setAdding(false);
@@ -145,7 +137,6 @@ export default function TodaysQuest() {
         const created = await createTask({ title, date: today });
         setTasks((prev) => [...prev, created]);
         setNewTitle('');
-        // Keep input open for rapid entry
       } catch (err) {
         console.error('Failed to create task:', err);
       }
@@ -163,25 +154,20 @@ export default function TodaysQuest() {
       setNewTitle('');
     }
   }
-
-  // ── Toggle task completed ───────────────────────────────────────
   async function handleToggle(id, completed) {
-    // Optimistic update
+    if (!completed) return;
     setTasks((prev) =>
       prev.map((t) => (t._id === id ? { ...t, completed } : t))
     );
     try {
       await updateTask(id, { completed });
     } catch (err) {
-      // Revert on failure
       setTasks((prev) =>
         prev.map((t) => (t._id === id ? { ...t, completed: !completed } : t))
       );
       console.error('Failed to update task:', err);
     }
   }
-
-  // ── Delete task ─────────────────────────────────────────────────
   async function handleDelete(id) {
     const prev = tasks;
     setTasks((t) => t.filter((x) => x._id !== id));
@@ -192,8 +178,6 @@ export default function TodaysQuest() {
       console.error('Failed to delete task:', err);
     }
   }
-
-  // ── Roll over yesterday's undone tasks ──────────────────────────
   async function handleRollOver() {
     try {
       const promises = yesterdayUndone.map((t) =>
@@ -206,21 +190,17 @@ export default function TodaysQuest() {
       console.error('Failed to roll over tasks:', err);
     }
   }
-
-  // ── Computed stats ──────────────────────────────────────────────
   const total = tasks.length;
   const done = tasks.filter((t) => t.completed).length;
   const percent = total === 0 ? 0 : Math.round((done / total) * 100);
-
-  // ── Render ──────────────────────────────────────────────────────
   return (
-    <section className="lg:col-span-3 bg-theme-elevated rounded-2xl p-5 flex flex-col justify-between">
+    <section className="lg:col-span-2 bg-black rounded-2xl p-5 flex flex-col justify-between">
       <div>
         <h2 className="text-sm font-semibold tracking-wide text-theme-text mb-4">
           Today's Quest
         </h2>
 
-        {/* Progress gauge + count */}
+        
         <div className="flex items-center space-x-4 mb-6">
           <ProgressRing percent={percent} />
           <div>
@@ -231,7 +211,7 @@ export default function TodaysQuest() {
           </div>
         </div>
 
-        {/* Task list */}
+        
         {loading ? (
           <div className="text-xs text-theme-muted text-center py-4">Loading…</div>
         ) : tasks.length === 0 && !adding ? (
@@ -251,7 +231,7 @@ export default function TodaysQuest() {
           </div>
         )}
 
-        {/* Add task area */}
+        
         {adding && (
           <div className="mt-3 flex items-center space-x-2">
             <input
@@ -281,7 +261,7 @@ export default function TodaysQuest() {
         </button>
       </div>
 
-      {/* Roll-over footer */}
+      
       {yesterdayUndone.length > 0 && (
         <button
           type="button"

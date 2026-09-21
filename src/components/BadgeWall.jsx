@@ -1,18 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getTasks } from '../storage';
 import {
-  BADGE_TIERS,
-  ACHIEVEMENT_BADGES,
   toLocalDate,
-  computeStreak,
-  computeStats
+  BADGE_TIERS,
+  computePerfectDayStreak,
+  computeLongestPerfectStreak
 } from '../utils/milestones';
 
-// ── Component ─────────────────────────────────────────────────────────
-
 export default function BadgeWall() {
+  const navigate = useNavigate();
   const [tasksByDate, setTasksByDate] = useState({});
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -20,7 +20,7 @@ export default function BadgeWall() {
 
     const to = toLocalDate();
     const d = new Date();
-    d.setFullYear(d.getFullYear() - 1);
+    d.setDate(d.getDate() - 1000);
     const from = toLocalDate(d);
 
     getTasks(from, to)
@@ -40,49 +40,34 @@ export default function BadgeWall() {
       });
 
     return () => { cancelled = true; };
+  }, [refreshKey]);
+
+  useEffect(() => {
+    const handleTasksChanged = () => setRefreshKey((key) => key + 1);
+    window.addEventListener('tasks-changed', handleTasksChanged);
+    return () => window.removeEventListener('tasks-changed', handleTasksChanged);
   }, []);
+  const { perfectDayStreak, longestPerfectStreak, currentBadge, nextBadge } = useMemo(() => {
+    const longest = computeLongestPerfectStreak(tasksByDate);
+    const current = BADGE_TIERS.reduce((highest, tier) => (
+      longest >= tier.threshold ? tier : highest
+    ), null);
+    const next = BADGE_TIERS.find((tier) => longest < tier.threshold) || null;
 
-  // Compute stats for badge checks
-  const { streak, stats, currentBadge, nextBadge } = useMemo(() => {
-    const s = computeStreak(tasksByDate);
-
-    let totalTasks = 0;
-    let totalDone = 0;
-    let perfectDays = 0;
-
-    Object.values(tasksByDate).forEach((info) => {
-      totalTasks += info.total;
-      totalDone += info.done;
-      if (info.total > 0 && info.done === info.total) perfectDays += 1;
-    });
-
-    const st = { totalTasks, totalDone, perfectDays };
-
-    // Current streak badge
-    let current = null;
-    let next = BADGE_TIERS[0];
-    for (const tier of BADGE_TIERS) {
-      if (s >= tier.threshold) {
-        current = tier;
-      } else {
-        next = tier;
-        break;
-      }
-    }
-    if (s >= BADGE_TIERS[BADGE_TIERS.length - 1].threshold) {
-      next = null;
-    }
-
-    return { streak: s, stats: st, currentBadge: current, nextBadge: next };
+    return {
+      perfectDayStreak: computePerfectDayStreak(tasksByDate),
+      longestPerfectStreak: longest,
+      currentBadge: current,
+      nextBadge: next,
+    };
   }, [tasksByDate]);
-
-  // Determine which achievement badges are unlocked
   const achievementStatus = useMemo(() => {
-    return ACHIEVEMENT_BADGES.map((badge) => ({
+    return BADGE_TIERS.map((badge) => ({
       ...badge,
-      unlocked: badge.check(stats),
+      id: badge.name,
+      unlocked: longestPerfectStreak >= badge.threshold,
     }));
-  }, [stats]);
+  }, [longestPerfectStreak]);
 
   const colorMap = {
     cyan: {
@@ -99,9 +84,18 @@ export default function BadgeWall() {
     },
   };
 
+  const badgeSubtitle = !currentBadge && nextBadge
+    ? `${nextBadge.name} - unlock at ${nextBadge.threshold} perfect day${nextBadge.threshold === 1 ? '' : 's'}`
+    : nextBadge
+      ? `${nextBadge.name} - ${perfectDayStreak === 0
+        ? `unlock at ${nextBadge.threshold} consecutive perfect days`
+        : `${nextBadge.threshold - perfectDayStreak} more perfect day${nextBadge.threshold - perfectDayStreak === 1 ? '' : 's'} to go`}`
+      : 'All milestones complete';
+  const badgeSubtitleIcon = nextBadge?.emoji || currentBadge?.emoji;
+
   return (
     <div className="space-y-4">
-      {/* Current Badge Card */}
+      
       <section
         className="card-glass rounded-2xl p-3.5 flex items-center space-x-3.5"
         data-purpose="current-badge"
@@ -112,23 +106,24 @@ export default function BadgeWall() {
           } border flex items-center justify-center text-xl`}>
           {loading ? '…' : currentBadge ? currentBadge.emoji : '—'}
         </div>
-        <div>
+        <div className="min-w-0 flex-1">
           <div className="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">
             Current Badge
           </div>
           <div className="text-sm font-bold text-indigo-300">
             {loading ? '—' : currentBadge ? currentBadge.name : 'None yet'}
           </div>
-          {nextBadge && !loading && (
-            <div className="text-[11px] text-slate-400 flex items-center gap-1">
-              <span>{nextBadge.emoji} {nextBadge.name}</span>
-              <span>— unlock at {nextBadge.threshold} days</span>
+          {!loading && (
+            <div className="text-[11px] text-slate-400 whitespace-nowrap overflow-hidden text-ellipsis">
+              <span className="inline-block max-w-full truncate">
+                {badgeSubtitleIcon} {badgeSubtitle}
+              </span>
             </div>
           )}
         </div>
       </section>
 
-      {/* Badge Wall */}
+      
       <section
         className="card-glass rounded-2xl p-5 flex flex-col justify-between"
         data-purpose="badge-wall"
@@ -144,7 +139,14 @@ export default function BadgeWall() {
         ) : (
           <div className="grid grid-cols-4 gap-3 py-2">
             {achievementStatus.map((badge) => (
-              <div key={badge.id} className="flex items-center justify-center" title={badge.desc}>
+              <button
+                key={badge.id}
+                type="button"
+                className="flex items-center justify-center"
+                title={badge.desc}
+                aria-label={`View ${badge.name} achievement`}
+                onClick={() => navigate('/achievements')}
+              >
                 {badge.unlocked ? (
                   <div className={`w-10 h-10 rounded-full bg-slate-800/80 border border-indigo-500/40 flex items-center justify-center shadow-sm shadow-blue-500/20 text-sm`}>
                     {badge.emoji}
@@ -157,7 +159,7 @@ export default function BadgeWall() {
                     </span>
                   </div>
                 )}
-              </div>
+              </button>
             ))}
           </div>
         )}
